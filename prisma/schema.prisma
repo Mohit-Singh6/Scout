@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                 String    @id @default(cuid())
+  userId             String
+  providerType       String
+  providerId         String
+  providerAccountId  String
+  refreshToken       String?
+  accessToken        String?
+  accessTokenExpires DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id])
+
+  @@unique([providerId, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  expires      DateTime
+  sessionToken String   @unique
+  accessToken  String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  websites      Website[]
+}
+
+model VerificationRequest {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, token])
+}
+
+// 2. Scout Custom Platform Core Models (Highly Optimized)
+
+model Website {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name            String
+  baseUrl         String           // e.g., "https://meetnow-backend.onrender.com"
+  hostingProvider String           // e.g., "RENDER", "VERCEL", "RAILWAY"
+  addedAt         DateTime         @default(now())
+
+  // Crucial Adjustment: The nested routes now point to a relational table
+  monitoredRoutes MonitoredRoute[] 
+}
+
+model MonitoredRoute {
+  id               String            @id @default(cuid())
+  websiteId        String
+  website          Website           @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  
+  routePath        String            // e.g., "/" or "/api/v1/health"
+  routeType        RouteType         // Enum validation split
+  currentCondition CurrentCondition  @default(OPERATIONAL) // Instant query cache lookups
+  updatedAt        DateTime          @updatedAt
+
+  // Connects directly to our performance graph records
+  latencyLogs      LatencyLog[]      
+}
+
+model LatencyLog {
+  id               String          @id @default(cuid())
+  routeId          String
+  monitoredRoute   MonitoredRoute  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  
+  statusCode       Int             // e.g., 200, 404, 500
+  latencyMs        Int             // Calculated ping time
+  exceptionMessage String?         // For storing "TIMEOUT_EXCEPTION"
+  aiSummary        String?         // The 10% Gemini synthesized payload result string
+  createdAt        DateTime        @default(now())
+
+  // This index guarantees Recharts graphs pull historic lines instantly 
+  @@index([routeId, createdAt])    
+}
+
+// 3. System Data Enum Toggles
+
+enum RouteType {
+  FRONTEND_PAGE
+  BACKEND_HEALTH
+}
+
+enum CurrentCondition {
+  OPERATIONAL
+  DEGRADED
+  DOWN
+  TIMEOUT
+}
