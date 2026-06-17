@@ -51,7 +51,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <div>
           <SessionProvider session={session}>
-            <Navbar user={user} />
+            <Navbar/>
             {children}
           </SessionProvider>
         </div>

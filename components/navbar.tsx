@@ -20,15 +20,15 @@ function Navbar() {
   const {data: session} = useSession();
   const user = session?.user as User;
   // console.log(session);
-//   {
-//   user: {
-//     name: 'Mohit Singh',
-//     email: 'mohits.it.24@nitj.ac.in',
-//     image: 'https://avatars.githubusercontent.com/u/179359671?v=4',
-//     id: 'cmqhm0nry000058y6ys68xd6y'
-//   },
-//   expires: '2026-07-17T05:25:08.501Z'
-// }
+  //   {
+  //   user: {
+  //     name: 'Mohit Singh',
+  //     email: 'mohits.it.24@nitj.ac.in',
+  //     image: 'https://avatars.githubusercontent.com/u/179359671?v=4',
+  //     id: 'cmqhm0nry000058y6ys68xd6y'
+  //   },
+  //   expires: '2026-07-17T05:25:08.501Z'
+  // }
 
   return (
     <header className="fixed left-0 right-0 top-5 z-50 flex justify-center px-4">
