@@ -34,7 +34,7 @@ function Navbar() {
     <header className="fixed left-0 right-0 top-5 z-50 flex justify-center px-4">
       <nav className="flex w-full max-w-6xl items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/80 px-4 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl sm:px-5">
         <Link href="/" className="flex items-center gap-3">
-          <span className="relative flex size-10 items-center justify-center rounded-xl border border-zinc-800 p-2">
+          <span className="relative flex size-10 items-center justify-center rounded-xl p-2">
             <Image src="/images/logo.png" alt="Scout logo" width={26} height={26} priority />
           </span>
           <span className="text-xl font-semibold tracking-tight">
@@ -62,14 +62,14 @@ function Navbar() {
               <Link
                 href="/sites/new"
                 aria-label="Add new site"
-                className="grid size-9 place-items-center rounded-full border border-zinc-800 text-xl leading-none text-emerald-400 transition hover:border-emerald-400 hover:bg-emerald-600/10"
+                className="px-4 py-2 place-items-center rounded-full border border-zinc-800 text-base leading-none text-emerald-400 transition hover:bg-emerald-600/10"
               >
-                +
+                + Add Site
               </Link>
-              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50" href="/dashboard">
+              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50 text-base" href="/dashboard">
                 Dashboard
               </Link>
-              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50" href="#about">
+              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50 text-base" href="#about">
                 About us
               </Link>
               <div className="relative">
@@ -99,12 +99,12 @@ function Navbar() {
                 About us
               </Link>
               <Link
-                className="rounded-full bg-emerald-600 px-5 py-2 font-medium text-zinc-950 transition hover:bg-emerald-700"
+                className="rounded-full bg-emerald-600 px-5 py-2 font-medium text-zinc-950 transition hover:bg-emerald-700 text-base"
                 href="#track"
               >
                 Track your site
               </Link>
-              <Link className="rounded-full border border-zinc-800 px-5 py-2 font-medium text-zinc-50 transition hover:bg-zinc-900" href="/signin">
+              <Link className="rounded-full border border-zinc-800 px-5 py-2 font-medium text-zinc-50 transition hover:bg-zinc-900 text-base" href="/signin">
                 Sign in
               </Link>
             </>

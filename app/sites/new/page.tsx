@@ -2,6 +2,12 @@
 import { addWebsite } from '@/lib/actions/addWebsite';
 import { useState } from 'react';
 
+interface MonitoredRouteInput {
+    routePath: string;
+    routeType: 'FRONTEND_PAGE' | 'BACKEND_HEALTH';
+}
+
+
 export default function NewSitePage() {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -79,6 +85,7 @@ export default function NewSitePage() {
             if (!route.routeType) {
                 routeErrors[`routeType-${index}`] = 'Route type is required';
             }
+            if ((route.routeType != 'FRONTEND_PAGE') && (route.routeType != 'BACKEND_HEALTH')) routeErrors[`routeType-${index}`] = 'Route type can only be FRONTEND_PAGE or BACKEND_HEALTH';;
         });
 
         if (Object.keys(routeErrors).length > 0) {
@@ -130,17 +137,17 @@ export default function NewSitePage() {
             return;
         }
 
-        // call addWebsite function
-        setFormData((prev) => ({
-            ...prev, monitoredRoutes: routeData
-        }))
 
-        addWebsite(formData);
+
+        // call addWebsite function
+        const data = {...formData, monitoredRoutes: routeData};
+
+        addWebsite(data);
         window.location.href = '/sites'; // Redirect to dashboard after submission
     }
 
     return (
-        <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
+        <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50 mt-10">
             {/* Background Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
             
@@ -156,9 +163,6 @@ export default function NewSitePage() {
                         <h1 className="mb-2 text-4xl font-bold tracking-tight">
                             Add a New <span className="text-emerald-400">Site</span>
                         </h1>
-                        <p className="text-zinc-400">
-                            Monitor your website uptime and performance across all your hosting platforms.
-                        </p>
                     </div>
 
                     {/* Error Message */}
@@ -262,7 +266,7 @@ export default function NewSitePage() {
                                             {routeData.length > 1 && (
                                                 <button
                                                     onClick={() => handleDeleteRoute(index)}
-                                                    className="text-xs font-medium text-red-400 transition hover:text-red-300 hover:underline"
+                                                    className="text-sm font-medium text-red-400 transition hover:text-red-300 cursor-pointer"
                                                 >
                                                     Delete
                                                 </button>
@@ -329,7 +333,7 @@ export default function NewSitePage() {
                             {routeCount < maxRoutes ? (
                                 <button
                                     onClick={handleAddRoute}
-                                    className="w-full rounded-lg border border-dashed border-emerald-400/50 bg-emerald-950/20 px-4 py-2.5 font-medium text-emerald-400 transition hover:bg-emerald-950/40 hover:border-emerald-400"
+                                    className="w-full rounded-lg border border-emerald-400/50 bg-emerald-950/20 px-4 py-2.5 font-medium text-emerald-400 transition cursor-pointer hover:bg-emerald-950/40 cursor-pointer"
                                 >
                                     + Add Route
                                 </button>
@@ -344,13 +348,13 @@ export default function NewSitePage() {
                         <div className="mt-8 flex gap-3 border-t border-zinc-700 pt-8">
                             <button
                                 onClick={handleSubmit}
-                                className="flex-1 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-6 py-3 font-medium text-zinc-950 transition duration-200 hover:from-emerald-400 hover:to-emerald-500 active:scale-95 shadow-lg shadow-emerald-500/20"
+                                className="flex-1 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-6 py-3 font-medium text-zinc-950 transition duration-200 hover:from-emerald-400 hover:to-emerald-500 active:scale-95 shadow-lg shadow-emerald-500/20 cursor-pointer "
                             >
-                                Create Site
+                                Add Site
                             </button>
                             <button
                                 onClick={() => window.history.back()}
-                                className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900/50 px-6 py-3 font-medium text-zinc-300 transition duration-200 hover:border-zinc-600 hover:bg-zinc-900 active:scale-95"
+                                className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900/50 px-6 py-3 font-medium text-zinc-300 transition duration-200 hover:border-zinc-600 hover:bg-zinc-900 active:scale-95 cursor-pointer"
                             >
                                 Cancel
                             </button>

@@ -29,7 +29,7 @@ const architectsDaughter = Architects_Daughter({
 });
 
 export const metadata: Metadata = {
-  title: "Scout - Portfolio uptime monitoring",
+  title: "Scout",
   description:
     "A unified uptime dashboard for portfolio projects spread across Vercel, Render, Railway, and Neon.",
 };

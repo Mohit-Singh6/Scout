@@ -88,17 +88,15 @@ export default function Home() {
 
           <div className="relative flex min-h-[520px] items-center justify-center">
             <div className="absolute h-80 w-80 rounded-full bg-emerald-950/60 blur-3xl" />
-            <div className="group relative grid size-72 place-items-center rounded-[2rem] border border-zinc-800 bg-zinc-900/60 shadow-2xl shadow-emerald-950/30 transition duration-500 hover:-rotate-3 sm:size-96">
               <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(16,185,129,.16),transparent_58%)] opacity-20" />
               <Image
                 src="/images/logo.png"
                 alt="Scout logo"
-                width={250}
-                height={250}
+                width={200}
+                height={200}
                 priority
-                className="relative drop-shadow-[0_0_28px_rgba(52,211,153,.10)] transition duration-500 group-hover:scale-105"
+                className="relative drop-shadow-[0_0_28px_rgba(52,211,153,.10)] transition duration-500 group-hover:scale-105 hover:-rotate-3"
               />
-            </div>
 
             <div className="absolute right-0 top-16 hidden w-56 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-2xl shadow-black/50 backdrop-blur md:block">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Render probe</p>
