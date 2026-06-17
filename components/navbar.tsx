@@ -5,11 +5,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useSession } from 'next-auth/react';
+import { logout } from '@/lib/actions/auth';
 
-function Navbar({ user }: { user: {name: string, initials: string} }) {
-  const [menuOpen, setMenuOpen] = useState(true);
+interface User {
+  name: string,
+  email: string,
+  image: string,
+  id: string
+}
+
+function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const {data: session} = useSession();
+  const user = session?.user as User;
+  // console.log(session);
+//   {
+//   user: {
+//     name: 'Mohit Singh',
+//     email: 'mohits.it.24@nitj.ac.in',
+//     image: 'https://avatars.githubusercontent.com/u/179359671?v=4',
+//     id: 'cmqhm0nry000058y6ys68xd6y'
+//   },
+//   expires: '2026-07-17T05:25:08.501Z'
+// }
 
   return (
     <header className="fixed left-0 right-0 top-5 z-50 flex justify-center px-4">
@@ -57,16 +76,17 @@ function Navbar({ user }: { user: {name: string, initials: string} }) {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((open) => !open)}
-                  className="grid size-10 place-items-center rounded-full bg-emerald-600 text-sm font-bold text-zinc-950 transition hover:bg-emerald-700"
+                  className="grid size-10 place-items-center rounded-full transition hover:bg-zinc-900/50"
                   aria-expanded={menuOpen}
                   aria-label="Open user menu"
                 >
-                  {user.initials}
+                  <Image src={user.image} alt={user.name[0]}  width={42} height={42} className="grid size-10 place-items-center rounded-full hover:opacity-90"/>
                 </button>
                 {menuOpen ? (
-                  <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-zinc-800 bg-zinc-900 p-3 shadow-2xl shadow-black/50">
+                  <div className="absolute right-0 mt-4 w-56 rounded-2xl border border-zinc-800 bg-zinc-900 p-3 shadow-2xl shadow-black/50">
                     <p className="px-3 pb-3 text-sm font-medium text-zinc-50">{user.name}</p>
-                    <button className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-zinc-50">
+                    <p className="px-3 pb-3 text-sm font-medium text-zinc-50">{user.email}</p>
+                    <button className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-zinc-50" onClick={logout}>
                       Sign out
                     </button>
                   </div>
