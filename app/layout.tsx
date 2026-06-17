@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import { Architects_Daughter, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/navbar";
+
+const user = {
+  name: "Mohit Singh",
+  initials: "MS",
+};
+
+// for session provider
+import { auth } from "../auth";
+import SessionProvider from "@/components/sessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,17 +34,29 @@ export const metadata: Metadata = {
     "A unified uptime dashboard for portfolio projects spread across Vercel, Render, Railway, and Neon.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
+  const session = await auth();
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${architectsDaughter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <div>
+          <SessionProvider session={session}>
+            <Navbar user={user} />
+            {children}
+          </SessionProvider>
+        </div>
+
+      </body>
     </html>
   );
 }

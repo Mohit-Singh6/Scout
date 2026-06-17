@@ -1,11 +1,15 @@
+
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-// import auth from '@/lib/auth';
+import { useSession } from 'next-auth/react';
 
 function Navbar({ user }: { user: {name: string, initials: string} }) {
   const [menuOpen, setMenuOpen] = useState(true);
-  const isSignedIn = Boolean(!user); // Replace with actual auth check
+
+  const {data: session} = useSession();
 
   return (
     <header className="fixed left-0 right-0 top-5 z-50 flex justify-center px-4">
@@ -34,7 +38,7 @@ function Navbar({ user }: { user: {name: string, initials: string} }) {
         </div>
 
         <div className="hidden items-center gap-2 text-sm text-zinc-300 md:flex">
-          {isSignedIn ? (
+          {session ? (
             <>
               <Link
                 href="/sites/new"

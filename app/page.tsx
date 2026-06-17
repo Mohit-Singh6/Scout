@@ -3,12 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import Navbar from "@/components/navbar";
+import { signIn, signOut, useSession } from "next-auth/react";
 
-const user = {
-  name: "Mohit Singh",
-  initials: "MS",
-};
+
 
 const platformChecks = [
   { name: "Vercel", status: "UP", latency: "184ms", accent: "bg-emerald-400" },
@@ -40,7 +37,6 @@ const featureCards = [
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
-      <Navbar user={user} />
 
       <section className="relative min-h-screen px-6 pb-20 pt-32 sm:px-10 lg:px-16">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
