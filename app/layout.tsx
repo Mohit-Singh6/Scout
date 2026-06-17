@@ -9,7 +9,7 @@ const user = {
 };
 
 // for session provider
-import { auth } from "../auth";
+import { auth } from "@/auth";
 import SessionProvider from "@/components/sessionProvider";
 
 const geistSans = Geist({
