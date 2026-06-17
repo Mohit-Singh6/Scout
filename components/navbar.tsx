@@ -66,7 +66,7 @@ function Navbar() {
               >
                 + Add Site
               </Link>
-              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50 text-base" href="/dashboard">
+              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50 text-base" href="/sites">
                 Dashboard
               </Link>
               <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50 text-base" href="#about">
