@@ -115,6 +115,8 @@ export async function GET() {
             message: "Logged the status of all websites concurrently.",
             summary: batchResults.map((r, index) => ({
                 routeId: routes[index].id,
+                websiteName: routes[index].website.name,
+                routePath: routes[index].routePath,
                 outcome: r.status // Will explicitly show "fulfilled" or "rejected"
             }))
         }, { status: 200 });    

@@ -1,4 +1,5 @@
-import { getWebsites } from "@/lib/actions/getWebsites"
+import { getRouteById } from "@/lib/actions/getRouteById"
+import { getWebsiteById } from "@/lib/actions/getWebsiteById"
 import Link from "next/link";
 
 interface MonitoredRoute {
@@ -6,6 +7,7 @@ interface MonitoredRoute {
     routePath: string;
     routeType: string;
     currentCondition: string;
+    website: Website[]
 }
 
 interface Website {
@@ -14,7 +16,6 @@ interface Website {
     baseUrl: string;
     hostingProvider: string;
     addedAt: Date;
-    monitoredRoutes: MonitoredRoute[];
 }
 
 function getOverallStatus(routes: MonitoredRoute[]): 'OPERATIONAL' | 'DEGRADED' | 'DOWN' | 'TIMEOUT' {
@@ -67,9 +68,26 @@ function getStatusStyles(status: string) {
     }
 }
 
-export default async function Sites() {
-    const response = await getWebsites();
-    const websites: Website[] = response.data || [];
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+
+export default async function Sites({params} : PageProps) {
+
+    const { id } = await params;
+    console.log("id: ", id);
+
+
+    const [currentRouteData, websiteData] = await Promise.all([getRouteById(id), getWebsiteById(id)]);
+
+    const currentRoute = currentRouteData.data;
+    const allRoutesForDropdown = websiteData.data?.monitoredRoutes;
+
+    const website = currentRoute?.website;
+
+    // console.log("ROUTE: ", currentRoute);    
+    // console.log("All routes: ", allRoutesForDropdown);    
 
     return (
         <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
@@ -90,37 +108,10 @@ export default async function Sites() {
                                 Your <span className="text-emerald-400">Monitored Sites</span>
                             </h1>
                         </div>
-                        <Link
-                            href="/sites/new"
-                            className="rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-6 py-3 font-medium text-zinc-950 transition duration-200 hover:from-emerald-400 hover:to-emerald-500 active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap"
-                        >
-                            + Add Site
-                        </Link>
                     </div>
 
                     {/* Websites List */}
-                    {websites.length === 0 ? (
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-12 text-center backdrop-blur-xl">
-                            <div className="mb-4 text-5xl">📭</div>
-                            <h2 className="mb-2 text-xl font-semibold">No sites yet</h2>
-                            <p className="mb-6 text-zinc-400">
-                                Start monitoring your portfolio sites by adding your first one.
-                            </p>
-                            <Link
-                                href="/sites/new"
-                                className="inline-block rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-6 py-3 font-medium text-zinc-950 transition duration-200 hover:from-emerald-400 hover:to-emerald-500 active:scale-95"
-                            >
-                                Add Your First Site
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {websites.map((website) => {
-                                const status = getOverallStatus(website.monitoredRoutes);
-                                const statusStyles = getStatusStyles(status);
 
-                                return (
-                                    <Link key={website.id} href={`/sites/${website.monitoredRoutes[0].id}`}>
                                         <div className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 hover:border-emerald-500/50 hover:bg-zinc-900/60 cursor-pointer backdrop-blur-sm mt-3">
                                             <div className="flex items-center justify-between gap-4">
                                                 {/* Left Section - Site Info */}
@@ -129,46 +120,33 @@ export default async function Sites() {
                                                         {website.name}
                                                     </h3>
                                                     <p className="mb-2 text-sm text-zinc-400 truncate">
-                                                        {website.baseUrl}
+                                                        {website.baseUrl}/{routeData.routePath}
                                                     </p>
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="text-xs px-2 py-1 rounded-full bg-zinc-800/50 text-zinc-300">
                                                             {website.hostingProvider}
                                                         </span>
-                                                        <span className="text-xs text-zinc-500">
-                                                            {website.monitoredRoutes.length} route{website.monitoredRoutes.length !== 1 ? 's' : ''}
-                                                        </span>
                                                     </div>
+                                                </div>
+                                                <div>
+                                                    <select>
+                                                        {
+                                                            allRoutesForDropdown.map((route: any) => (
+                                                                <div>
+                                                                    <Link href="/route.routePath">
+                                                                        <option>{route.routePath}</option>
+                                                                    </Link>
+
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </select>
                                                 </div>
 
                                                 {/* Right Section - Status */}
-                                                <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
-                                                    <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${statusStyles.badge}`}>
-                                                        <span className={`inline-block size-2 rounded-full ${statusStyles.dot}`} />
-                                                        <span className="text-sm font-medium">{statusStyles.text}</span>
-                                                    </div>
-                                                    <svg
-                                                        className="size-5 text-zinc-500 group-hover:text-emerald-400 transition"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 5l7 7-7 7"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
+            </div>
+            </div>
             </div>
         </main>
     );

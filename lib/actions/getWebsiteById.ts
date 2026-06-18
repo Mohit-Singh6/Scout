@@ -1,30 +1,29 @@
 "use server";
 
-// import { auth } from '@/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
-
-
-export const getAllRoutes = async () => {
+export const getWebsiteById = async (id: string) => {
     try {
-        // const session = await auth();
+        const session = await auth();
         
-        // if (!session?.user?.id) {
-        //     throw new Error('Unauthorized: User not found in session');
-        // }
+        if (!session?.user?.id) {
+            throw new Error('Unauthorized: User not found in session');
+        }
         
-        const routes = await prisma.monitoredRoute.findMany({ include: {website: true} });
+        const website = await prisma.website.findFirst({where: { monitoredRoutes: { some: { id: id  }
+        }}, include: {monitoredRoutes: true}});
 
-        // console.log(routes);
+        // console.log(websites);
 
         return {
             success: true,
-            data: routes,
+            data: website,
             message: 'Data fetched successfully.'
         };
     } catch (error) {
-        console.error('Error fetching routes:', error);
-        throw new Error(error instanceof Error ? error.message : 'Failed to get routes data');
+        console.error('Error fetching website:', error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to get website data');
     }
 }
 
