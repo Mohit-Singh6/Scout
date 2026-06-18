@@ -121,7 +121,7 @@ export default async function Sites() {
 
                                 return (
                                     <Link key={website.id} href={`/sites/${website.id}`}>
-                                        <div className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 hover:border-emerald-500/50 hover:bg-zinc-900/60 cursor-pointer backdrop-blur-sm">
+                                        <div className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 hover:border-emerald-500/50 hover:bg-zinc-900/60 cursor-pointer backdrop-blur-sm mt-3">
                                             <div className="flex items-center justify-between gap-4">
                                                 {/* Left Section - Site Info */}
                                                 <div className="flex-1 min-w-0">

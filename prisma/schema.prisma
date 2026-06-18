@@ -93,7 +93,9 @@ model MonitoredRoute {
   updatedAt        DateTime          @updatedAt // Auto-updates on every latency log insertion for real-time status reflection
 
   // Connects directly to our performance graph records
-  latencyLogs      LatencyLog[]      
+  latencyLogs      LatencyLog[]   
+
+  @@index([websiteId])   
 }
 
 model LatencyLog {
