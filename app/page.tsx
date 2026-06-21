@@ -69,7 +69,7 @@ export default function Home() {
                 Track your site
               </Link>
               <Link
-                href="#about"
+                href="/about-us"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/60 px-6 text-base font-semibold text-zinc-50 transition hover:bg-zinc-900"
               >
                 See how it works
