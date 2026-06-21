@@ -147,7 +147,7 @@ export default function NewSitePage() {
     }
 
     return (
-        <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50 mt-10">
+        <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
             {/* Background Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
             
@@ -156,7 +156,7 @@ export default function NewSitePage() {
             <div className="absolute right-0 bottom-32 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
 
             {/* Content */}
-            <div className="relative px-6 py-20 sm:px-10 lg:px-16">
+            <div className="relative px-6 py-20 sm:px-10 lg:px-16 mt-10">
                 <div className="mx-auto max-w-2xl">
                     {/* Header */}
                     <div className="mb-10">

@@ -8,11 +8,15 @@ import { getWebsiteById } from "@/lib/actions/getWebsiteById"
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner"
+
+
 
 import { subDays, subHours } from "date-fns";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getLatencyData } from "@/lib/actions/getLatencyData";
+import { getPercentageUptime } from "@/lib/actions/getPercentageUptime";
 
 interface MonitoredRoute {
     id: string;
@@ -33,6 +37,19 @@ interface Website {
 interface LatencyChartPoint {
     time: Date | string;
     latency: number;
+}
+
+interface DayLog {
+    time: string;
+    uptimePerc?: number;
+    status?: number;
+}
+
+function getStatusCodeStyles(statusCode: number) {
+    if (statusCode >= 200 && statusCode < 400) {
+        return 'bg-emerald-500 hover:bg-emerald-400';
+    }
+    return 'bg-red-500 hover:bg-red-400';
 }
 
 function getStatusStyles(status: string) {
@@ -111,7 +128,7 @@ function getRelativeTime(date: Date | string): { relative: string; exact: string
 
 interface PageProps {
     params: Promise<{ id: string }>;
-    searchParams: Promise<{ range?: number; stDate?: string; endDate?: string }>; // For: ?range=7d
+    searchParams: Promise<{ range?: string; stDate?: string; endDate?: string }>; // For: ?range=7d
 }
 
 export default function Sites({ params, searchParams }: PageProps) {
@@ -123,8 +140,15 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [isRouteSelectOpen, setIsRouteSelectOpen] = useState(false);
     const [isGraphSelectOpen, setIsGraphSelectOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingGraph, setIsLoadingGraph] = useState(false);
 
     const [latencyData, setLatencyData] = useState<LatencyChartPoint[]>([]);
+    const [uptimeData, setUptimeData] = useState<DayLog[]>([]);
+
+    const [hoveredDay, setHoveredDay] = useState<DayLog | null>(null);
+    const [timeRangeType, setTimeRangeType] = useState<'24h' | '7days' | '30days' | 'custom'>('24h');
+    const [startDateLabel, setStartDateLabel] = useState<string>('24h ago');
+    const [endDateLabel, setEndDateLabel] = useState<string>('Now');
 
     useEffect(() => {
         const loadData = async () => {
@@ -147,61 +171,150 @@ export default function Sites({ params, searchParams }: PageProps) {
                 }
 
                 const { range, stDate, endDate } = await searchParams;
+
                 let logs;
+                let uptimeData;
+                let startDateLocal: Date;
+                let endDateLocal: Date;
+                let rangeType: 'never' | '24h' | '7days' | '30days' | 'custom' = 'never';
+
                 if (range == undefined && stDate == undefined && endDate == undefined) {
-                    logs = (await getLatencyData(id, subHours(new Date(), 24), new Date())).data;
+                    startDateLocal = subHours(new Date(), 24);
+                    endDateLocal = new Date();
+                    rangeType = '24h';
+                    logs = (await getLatencyData(id, startDateLocal, endDateLocal)).data;
+                    uptimeData = (await getPercentageUptime(id, startDateLocal, endDateLocal)).data;
                 }
-                else if (range != undefined && stDate != undefined && endDate != undefined) return {
-                    error: {
-                        message: "Invalid queries in the URL"
+                else if (range != undefined && stDate != undefined && endDate != undefined) {
+                    return {
+                        error: {
+                            message: "Invalid queries in the URL"
+                        }
                     }
                 }
                 else if (range != undefined && stDate == undefined && endDate == undefined) {
-                    logs = (await getLatencyData(id, subDays(new Date(), range), new Date())).data;
+                    const rangeDays = range === '1d' ? 1 : range === '7d' ? 7 : range === '30d' ? 30 : 5;
+                    startDateLocal = subDays(new Date(), rangeDays);
+                    endDateLocal = new Date();
+                    rangeType = range === '1d' ? '24h' : range === '7d' ? '7days' : range === '30d' ? '30days' : 'custom';
+
+                    logs = (await getLatencyData(id, startDateLocal, endDateLocal)).data;
+                    uptimeData = (await getPercentageUptime(id, startDateLocal, endDateLocal)).data;
                 }
                 else if (stDate != undefined && endDate != undefined) {
-                    const st = new Date(stDate);
-                    const end = new Date(endDate);
-                    logs = (await getLatencyData(id, st, end)).data;
+                    startDateLocal = new Date(stDate);
+                    endDateLocal = new Date(endDate);
+                    rangeType = 'custom';
+                    logs = (await getLatencyData(id, startDateLocal, endDateLocal)).data;
+                    uptimeData = (await getPercentageUptime(id, startDateLocal, endDateLocal)).data;
                 }
-                else return {
-                    error: {
-                        message: "Enter valid date interval"
+                else {
+                    return {
+                        error: {
+                            message: "Enter valid date interval"
+                        }
                     }
                 }
 
                 setLatencyData(logs);
-                console.log("data: ", logs);
+                setUptimeData(uptimeData);
+                setTimeRangeType(rangeType as '24h' | '7days' | '30days' | 'custom');
+
+                // Generate labels based on time range
+                if (rangeType === '24h') {
+                    const startTimeStr = startDateLocal.toLocaleString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    setStartDateLabel(`${startTimeStr}`);
+                    setEndDateLabel('Now');
+                } else if (rangeType === '7days') {
+                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    setStartDateLabel(startDateStr);
+                    setEndDateLabel('Today');
+                } else if (rangeType === '30days') {
+                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    setStartDateLabel(startDateStr);
+                    setEndDateLabel('Today');
+                } else if (rangeType === 'custom') {
+                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    const endDateStr = endDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    setStartDateLabel(startDateStr);
+                    setEndDateLabel(endDateStr);
+                }
+
+                console.log("UptimeData: ", uptimeData);
 
             } catch (error) {
                 console.error('Error loading route data:', error);
             } finally {
                 setIsLoading(false);
+                setIsLoadingGraph(false);
             }
         };
 
         loadData();
     }, [params, searchParams]);
 
+    function getCellColor(day: DayLog): string {
+        // For 24-hour data (has status code)
+        if (day.status !== undefined) {
+            return getStatusCodeStyles(day.status);
+        }
+        // For multi-day data (has uptime percentage)
+        if (day.uptimePerc !== undefined) {
+            const pct = day.uptimePerc;
+            if (pct >= 95) return "bg-emerald-500 hover:bg-emerald-400";       // Highest Green
+            if (pct >= 70) return "bg-emerald-600/60 hover:bg-emerald-500/80"; // Lighter Green
+            if (pct >= 40) return "bg-amber-500 hover:bg-amber-400";           // Yellow
+            return "bg-red-500 hover:bg-red-400";                              // `Red`
+        }
+        return "bg-zinc-400 hover:bg-zinc-300";
+    }
+    function getUptimeTextColor(pct: number): string {
+        if (pct >= 95) return "text-emerald-400";       // Highest Green
+        if (pct >= 70) return "text-emerald-500";      // Lighter Green
+        if (pct >= 40) return "text-amber-400";        // Yellow
+        return "text-red-500";                          // Red
+    }
+
+    function getRangeLabel(): string {
+        switch (timeRangeType) {
+            case '24h':
+                return 'Last 24 Hours';
+            case '7days':
+                return 'Last 7 Days';
+            case '30days':
+                return 'Last 30 Days';
+            case 'custom':
+                return `${startDateLabel} - ${endDateLabel}`;
+            default:
+                return 'Filter Window';
+        }
+    }
     const handleRouteChange = (newRouteId: string) => {
         setIsRouteSelectOpen(false);
         router.push(`/sites/${newRouteId}`);
     };
 
-    const handleGraphChange = (range: number | undefined, stDate: Date | undefined, endDate: Date | undefined) => {
+    const handleGraphChange = (range: string | undefined, stDate: Date | undefined, endDateLocal: Date | undefined) => {
         setIsGraphSelectOpen(false);
+        setIsLoadingGraph(true);
 
 
-        console.log("PARAMS: ", range, stDate, endDate);
+        console.log("PARAMS: ", range, stDate, endDateLocal);
         if (range !== undefined) {
             console.log("Range: ", range);
             router.push(`/sites/${routeId}?range=${range}`);
         }
-        else if (stDate !== undefined && endDate !== undefined) {
+        else if (stDate !== undefined && endDateLocal !== undefined) {
             const st = stDate.toISOString();
-            const end = endDate.toISOString();
+            const end = endDateLocal.toISOString();
             console.log("Date: ", st, end);
-            router.push(`/sites/${routeId}?st_date=${st}&end_date=${end}`);
+            router.push(`/sites/${routeId}?stDate=${st}&endDate=${end}`);
         }
         else return {
             error: {
@@ -220,13 +333,8 @@ export default function Sites({ params, searchParams }: PageProps) {
 
     if (isLoading) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-zinc-50">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
-                <div className="absolute left-1/2 top-32 h-80 w-80 -translate-x-1/2 rounded-full bg-emerald-950/30 blur-3xl" />
-                <div className="absolute right-0 bottom-32 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
-                <div className="relative flex items-center justify-center min-h-screen">
-                    <div className="text-zinc-400">Loading...</div>
-                </div>
+            <main className="min-h-screen bg-zinc-950 text-zinc-50 flex items-center justify-center">
+                <Spinner className="size-8" />
             </main>
         );
     }
@@ -242,6 +350,8 @@ export default function Sites({ params, searchParams }: PageProps) {
             </main>
         );
     }
+
+
 
     return (
         <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
@@ -274,7 +384,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                     {/* Route Selector & Status Card */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                         {/* Route Dropdown & Info */}
-                        <div className="lg:col-span-2">
+                        <div className="lg:col-span-2 relative z-30">
                             <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 transition duration-200 hover:border-emerald-500/30">
                                 <label className="block text-sm font-medium text-zinc-300 mb-3">
                                     Select Route
@@ -375,7 +485,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                     {/* Graphs Section */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Latency Graph Box Container */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between">
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between z-10">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-zinc-300">Performance Timelines</span>
 
@@ -385,53 +495,138 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         onClick={() => setIsGraphSelectOpen(!isGraphSelectOpen)}
                                         className="px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 text-xs flex items-center gap-2 hover:border-zinc-500 transition"
                                     >
-                                        <span>Filter Window</span>
-                                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                                        <span>{getRangeLabel()}</span>
+                                        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition ${isGraphSelectOpen ? 'rotate-180' : ''}`} />
                                     </button>
 
                                     {isGraphSelectOpen && (
-                                        <div className="absolute right-0 top-full mt-1 w-40 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 overflow-hidden">
-                                            <button onClick={() => handleGraphChange(1, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition border-b border-zinc-700/40">24 Hours</button>
-                                            <button onClick={() => handleGraphChange(7, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition border-b border-zinc-700/40">7 Days</button>
-                                            <button onClick={() => handleGraphChange(30, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition">30 Days</button>
+                                        <div className="absolute right-0 top-full mt-1 w-48 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 overflow-hidden">
+                                            <button onClick={() => handleGraphChange('1d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 24 Hours</button>
+                                            <button onClick={() => handleGraphChange('7d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 7 Days</button>
+                                            <button onClick={() => handleGraphChange('30d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 30 Days</button>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
+                            {!isLoadingGraph ? (
 
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={latencyData}>
-                                    <CartesianGrid stroke="var(--chart-5)" />
-                                    {/* Map the horizontal labels to your "time" string key */}
-                                    <XAxis dataKey="time" stroke="#71717a" fontSize={10} interval="preserveStartEnd" // Automatically hides labels to prevent overlapping
-                                        minTickGap={10}             // Ensures a minimum spacing gap of 30 pixels between text blocks
-                                    />
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={latencyData}>
+                                        <CartesianGrid stroke="var(--chart-5)" />
+                                        {/* Map the horizontal labels to your "time" string key */}
+                                        <XAxis dataKey="time" stroke="#71717a" fontSize={10} interval="preserveStartEnd" // Automatically hides labels to prevent overlapping
+                                            minTickGap={10}             // Ensures a minimum spacing gap of 30 pixels between text blocks
+                                        />
 
-                                    {/* The vertical tracking scale */}
-                                    <YAxis stroke="#71717a" fontSize={12} tickFormatter={(val) => msFormatter(val)} />
+                                        {/* The vertical tracking scale */}
+                                        <YAxis stroke="#71717a" fontSize={12} tickFormatter={(val) => msFormatter(val)} />
 
-                                    <Tooltip
-                                        contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} formatter={(val) => msFormatter(val as number)}
-                                    />
+                                        <Tooltip
+                                            contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} formatter={(val) => msFormatter(val as number)}
+                                        />
 
-                                    {/* This is what was missing! Maps the line curve to your "latency" integer value */}
-                                    <Line
-                                        type="monotone"
-                                        dataKey="latency"
-                                        stroke="#10b981"  // Clean Emerald Green line
-                                        strokeWidth={2}
-                                        dot={false}       // Removes bulky node dots for a smooth premium look
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
+                                        {/* This is what was missing! Maps the line curve to your "latency" integer value */}
+                                        <Line
+                                            type="monotone"
+                                            dataKey="latency"
+                                            name={timeRangeType === '24h' ? "Latency" : "Avg. Latency"}
+                                            stroke="#10b981"  // Clean Emerald Green line
+                                            strokeWidth={2}
+                                            dot={false}       // Removes bulky node dots for a smooth premium look
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full w-full text-zinc-50 flex items-center justify-center">
+                                    <Spinner className="size-8" />
+                                </div>
+                            )
+                            }
                         </div>
 
+
                         {/* Status Timeline Graph */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-8 h-96 flex flex-col items-center justify-center">
-                            <Activity className="w-12 h-12 text-zinc-800 mb-2" />
-                            <p className="text-zinc-400 text-sm font-medium">Uptime State Records</p>
-                            <p className="text-zinc-600 text-xs mt-1">Timeline map component logs compile here</p>
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-3 h-96 flex flex-col items-center justify-center">
+                            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between w-full max-w-[600px]">
+
+                                {/* 1. Top Section: Header Info */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
+                                        <span className="text-sm font-medium text-zinc-300">System Availability</span>
+                                    </div>
+                                    {/* <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded">
+                                        globalUptimeAverage % Uptime
+                                    </span> */}
+                                </div>
+
+                                {/* 2. Middle Section: Hover Details & The Matrix Strip */}
+                                {!isLoadingGraph ? (
+                                    <>
+                                        <div className="my-auto flex flex-col gap-3">
+                                            {/* Dynamic Text Box that responds to mouse hover */}
+                                            <div className="h-5 text-sm font-mono flex items-center justify-start">
+                                                {hoveredDay ? (
+                                                    <span className="text-zinc-200">
+                                                        {hoveredDay.time}:{" "}
+                                                        {hoveredDay.status !== undefined ? (
+                                                            <span className={hoveredDay.status >= 200 && hoveredDay.status < 400 ? "text-emerald-400 font-semibold" : "text-red-500 font-semibold"}>
+                                                                {hoveredDay.status} {hoveredDay.status >= 200 && hoveredDay.status < 400 ? '(UP)' : '(DOWN)'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`font-semibold ${getUptimeTextColor(hoveredDay.uptimePerc || 0)}`}>
+                                                                {hoveredDay.uptimePerc}% Uptime
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-zinc-500">
+                                                        {timeRangeType === '24h' ? 'Hover for status codes' : 'Hover over rows for breakdown'}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* The 30 column container grid */}
+                                            <div className="flex items-center gap-1.5 w-full h-12">
+                                                {uptimeData.map((day, i) => (
+                                                    <div
+                                                        key={i}
+                                                        onMouseEnter={() => setHoveredDay(day)}
+                                                        onMouseLeave={() => setHoveredDay(null)}
+                                                        className={`flex-1 h-full rounded-[3px] cursor-pointer transition-all duration-150 hover:scale-y-115 ${getCellColor(day)}`}
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            {/* Timeline bottom boundary metrics */}
+                                            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono px-0.5">
+                                                <span>{startDateLabel}</span>
+                                                <span>{endDateLabel}</span>
+                                            </div>
+                                        </div>
+
+
+                                        {/* 3. Bottom Section: Mini Log Feed */}
+                                        <div className="border-t border-zinc-800/60 pt-4 mt-2">
+                                            <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-2">Recent Incidents</p>
+                                            <div className="flex items-center justify-between text-xs text-zinc-400 bg-zinc-950/40 p-2.5 rounded-lg border border-zinc-800/50">
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                                    Minor outage recorded on Jun 15
+                                                </span>
+                                                <span className="text-[10px] text-zinc-500 font-mono">6 days ago</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="h-full w-full text-zinc-50 flex items-center justify-center">
+                                        <Spinner className="size-8" />
+                                    </div>
+                                )
+                                }
+
+                            </div>
                         </div>
                     </div>
                 </div>

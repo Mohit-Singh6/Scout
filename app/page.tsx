@@ -46,7 +46,7 @@ export default function Home() {
           <div className="max-w-3xl">
             <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300">
               <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,.75)]" />
-              Serverless checks every 5 minutes
+              Serverless checks every 15 minutes
             </div>
 
             <h1 className="text-5xl font-semibold tracking-tight text-zinc-50 sm:text-6xl lg:text-7xl">
@@ -118,7 +118,7 @@ export default function Home() {
             <p className="text-sm font-semibold uppercase tracking-[.24em] text-emerald-400">Unified dashboard</p>
             <h2 className="mt-4 text-4xl font-semibold tracking-tight text-zinc-50">All your project vitals, without dashboard hopping.</h2>
             <p className="mt-5 text-lg leading-8 text-zinc-300">
-              This section is ready for your real uptime table, Prisma history, and Recharts latency graphs once the monitoring data is connected.
+              This section is ready for your real uptime table, Prisma history, and latency graphs once the monitoring data is connected.
             </p>
           </div>
 

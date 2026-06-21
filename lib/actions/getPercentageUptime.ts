@@ -5,7 +5,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import { differenceInDays, eachDayOfInterval, interval, startOfDay } from 'date-fns';
 
-export const getLatencyData = async (id: string, startDate: Date, endDate: Date) => {
+export const getPercentageUptime = async (id: string, startDate: Date, endDate: Date) => {
     try {
         const session = await auth();
 
@@ -19,7 +19,7 @@ export const getLatencyData = async (id: string, startDate: Date, endDate: Date)
 
         const logs = await prisma.latencyLog.findMany({ where: { routeId: id, createdAt: createdAtQuery }, orderBy: { createdAt: "asc" }, include: { monitoredRoute: true } });
 
-        // console.log("logs:", logs);
+        console.log("uptimeData:", logs);
 
         const formattedlogs = logs.map((log) => (
             {
@@ -29,7 +29,7 @@ export const getLatencyData = async (id: string, startDate: Date, endDate: Date)
                     hour: '2-digit',
                     minute: '2-digit'
                 }),
-                latency: log.latencyMs
+                status: log.statusCode
             }
         ));
 
@@ -50,17 +50,17 @@ export const getLatencyData = async (id: string, startDate: Date, endDate: Date)
             });
 
             if (!groups[day]) groups[day] = [];
-            groups[day].push(log.latencyMs);
+            groups[day].push((log.statusCode >= 200 && log.statusCode < 400) ? 1 : 0);
         });
 
         // Map the buckets into a unified daily average array format for Recharts
         const dailyAverages = Object.keys(groups).map(day => {
             const sum = groups[day].reduce((a, b) => a + b, 0);
-            const avg = Math.round(sum / groups[day].length);
+            const percentage = Math.round(sum / groups[day].length) * 100;
 
             return {
                 time: day, // Becomes "Jun 19", "Jun 20", etc.
-                latency: avg
+                uptimePerc: percentage
             };
         });
 
