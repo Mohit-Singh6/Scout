@@ -510,7 +510,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                             </div>
 
                             {!isLoadingGraph ? (
-
+                                latencyData && latencyData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={latencyData}>
                                         <CartesianGrid stroke="var(--chart-5)" />
@@ -537,6 +537,11 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full w-full text-zinc-400 flex items-center justify-center">
+                                        <span className="text-sm">No performance data available for this time period</span>
+                                    </div>
+                                )
                             ) : (
                                 <div className="h-full w-full text-zinc-50 flex items-center justify-center">
                                     <Spinner className="size-8" />
@@ -588,6 +593,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                                             </div>
 
                                             {/* The 30 column container grid */}
+                                            {uptimeData && uptimeData.length > 0 ? (
                                             <div className="flex items-center gap-1.5 w-full h-12">
                                                 {uptimeData.map((day, i) => (
                                                     <div
@@ -598,6 +604,11 @@ export default function Sites({ params, searchParams }: PageProps) {
                                                     />
                                                 ))}
                                             </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center h-12 w-full">
+                                                    <span className="text-xs text-zinc-500">No uptime data available for this time period</span>
+                                                </div>
+                                            )}
 
                                             {/* Timeline bottom boundary metrics */}
                                             <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono px-0.5">

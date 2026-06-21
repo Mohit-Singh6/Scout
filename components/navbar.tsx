@@ -95,7 +95,7 @@ function Navbar() {
             </>
           ) : (
             <>
-              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50" href="#about">
+              <Link className="rounded-full px-4 py-2 transition hover:bg-zinc-900 hover:text-zinc-50" href="/about-us">
                 About us
               </Link>
               <Link
