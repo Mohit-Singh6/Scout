@@ -1,0 +1,1 @@
+// for client components that console.log() things are printed on the client side only not on the vs code, (prints only on the browser)

@@ -1,12 +1,18 @@
 'use client';
 
+
+// for client components that console.log() things are printed on the client side only not on the vs code, (prints only on the browser)
+
 import { getRouteById } from "@/lib/actions/getRouteById"
 import { getWebsiteById } from "@/lib/actions/getWebsiteById"
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { subDays, subHours } from "date-fns";
+
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { getLatencyData } from "@/lib/actions/getLatencyData";
 
 interface MonitoredRoute {
     id: string;
@@ -22,6 +28,11 @@ interface Website {
     baseUrl: string;
     hostingProvider: string;
     addedAt: Date;
+}
+
+interface LatencyChartPoint {
+    time: Date | string;
+    latency: number;
 }
 
 function getStatusStyles(status: string) {
@@ -99,17 +110,21 @@ function getRelativeTime(date: Date | string): { relative: string; exact: string
 }
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ range?: number; stDate?: string; endDate?: string }>; // For: ?range=7d
 }
 
-export default function Sites({params}: PageProps) {
+export default function Sites({ params, searchParams }: PageProps) {
     const router = useRouter();
     const [routeId, setRouteId] = useState<string | null>(null);
     const [currentRoute, setCurrentRoute] = useState<MonitoredRoute | null>(null);
     const [website, setWebsite] = useState<Website | null>(null);
     const [allRoutes, setAllRoutes] = useState<MonitoredRoute[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
+    const [isRouteSelectOpen, setIsRouteSelectOpen] = useState(false);
+    const [isGraphSelectOpen, setIsGraphSelectOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
+    const [latencyData, setLatencyData] = useState<LatencyChartPoint[]>([]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -130,6 +145,34 @@ export default function Sites({params}: PageProps) {
                 if (websiteDataRes.data) {
                     setAllRoutes(websiteDataRes.data.monitoredRoutes || []);
                 }
+
+                const { range, stDate, endDate } = await searchParams;
+                let logs;
+                if (range == undefined && stDate == undefined && endDate == undefined) {
+                    logs = (await getLatencyData(id, subHours(new Date(), 24), new Date())).data;
+                }
+                else if (range != undefined && stDate != undefined && endDate != undefined) return {
+                    error: {
+                        message: "Invalid queries in the URL"
+                    }
+                }
+                else if (range != undefined && stDate == undefined && endDate == undefined) {
+                    logs = (await getLatencyData(id, subDays(new Date(), range), new Date())).data;
+                }
+                else if (stDate != undefined && endDate != undefined) {
+                    const st = new Date(stDate);
+                    const end = new Date(endDate);
+                    logs = (await getLatencyData(id, st, end)).data;
+                }
+                else return {
+                    error: {
+                        message: "Enter valid date interval"
+                    }
+                }
+
+                setLatencyData(logs);
+                console.log("data: ", logs);
+
             } catch (error) {
                 console.error('Error loading route data:', error);
             } finally {
@@ -138,14 +181,42 @@ export default function Sites({params}: PageProps) {
         };
 
         loadData();
-    }, [params]);
+    }, [params, searchParams]);
 
     const handleRouteChange = (newRouteId: string) => {
-        setIsOpen(false);
+        setIsRouteSelectOpen(false);
         router.push(`/sites/${newRouteId}`);
     };
 
+    const handleGraphChange = (range: number | undefined, stDate: Date | undefined, endDate: Date | undefined) => {
+        setIsGraphSelectOpen(false);
+
+
+        console.log("PARAMS: ", range, stDate, endDate);
+        if (range !== undefined) {
+            console.log("Range: ", range);
+            router.push(`/sites/${routeId}?range=${range}`);
+        }
+        else if (stDate !== undefined && endDate !== undefined) {
+            const st = stDate.toISOString();
+            const end = endDate.toISOString();
+            console.log("Date: ", st, end);
+            router.push(`/sites/${routeId}?st_date=${st}&end_date=${end}`);
+        }
+        else return {
+            error: {
+                message: "Enter valid date interval"
+            }
+        }
+    };
+
     const statusStyles = currentRoute ? getStatusStyles(currentRoute.currentCondition) : getStatusStyles('UNKNOWN');
+
+
+    const msFormatter = (val: number) => {
+        return val + "ms"
+    }
+
 
     if (isLoading) {
         return (
@@ -176,7 +247,7 @@ export default function Sites({params}: PageProps) {
         <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
             {/* Background Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
-            
+
             {/* Blur Effects */}
             <div className="absolute left-1/2 top-32 h-80 w-80 -translate-x-1/2 rounded-full bg-emerald-950/30 blur-3xl" />
             <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
@@ -208,30 +279,30 @@ export default function Sites({params}: PageProps) {
                                 <label className="block text-sm font-medium text-zinc-300 mb-3">
                                     Select Route
                                 </label>
-                                
+
                                 {/* Custom Dropdown */}
                                 <div className="relative z-20">
+
                                     <button
-                                        onClick={() => setIsOpen(!isOpen)}
+                                        onClick={() => setIsRouteSelectOpen(!isRouteSelectOpen)}
                                         className="w-full px-4 py-3 rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-50 text-left flex items-center justify-between hover:border-emerald-500/50 transition"
                                     >
                                         <div className="flex flex-col">
                                             <span className="text-sm text-zinc-400">Endpoint</span>
                                             <span className="font-medium">{currentRoute.routePath}</span>
                                         </div>
-                                        <ChevronDown className={`w-5 h-5 text-zinc-400 transition ${isOpen ? 'rotate-180' : ''}`} />
+                                        <ChevronDown className={`w-5 h-5 text-zinc-400 transition ${isRouteSelectOpen ? 'rotate-180' : ''}`} />
                                     </button>
 
                                     {/* Dropdown Menu */}
-                                    {isOpen && (
+                                    {isRouteSelectOpen && (
                                         <div className="absolute top-full mt-2 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
                                             {allRoutes.map((route) => (
                                                 <button
                                                     key={route.id}
                                                     onClick={() => handleRouteChange(route.id)}
-                                                    className={`w-full px-4 py-3 text-left border-b border-zinc-700/50 last:border-b-0 transition hover:bg-zinc-700/50 z-50 ${
-                                                        currentRoute.id === route.id ? 'bg-emerald-500/10 border-l-2 border-l-emerald-500' : ''
-                                                    }`}
+                                                    className={`w-full px-4 py-3 text-left border-b border-zinc-700/50 last:border-b-0 transition hover:bg-zinc-700/50 z-50 ${currentRoute.id === route.id ? 'bg-emerald-500/10 border-l-2 border-l-emerald-500' : ''
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between z-50">
                                                         <div>
@@ -245,6 +316,7 @@ export default function Sites({params}: PageProps) {
                                         </div>
                                     )}
                                 </div>
+
 
                                 {/* Route Details */}
                                 <div className="mt-6 pt-6 border-t border-zinc-800/50">
@@ -302,18 +374,64 @@ export default function Sites({params}: PageProps) {
 
                     {/* Graphs Section */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Latency Graph */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-8 h-80 flex flex-col items-center justify-center">
-                            <LineChart data={data}>
-                                
-                            </LineChart>
+                        {/* Latency Graph Box Container */}
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-zinc-300">Performance Timelines</span>
+
+                                {/* Custom Filter Selector Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsGraphSelectOpen(!isGraphSelectOpen)}
+                                        className="px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 text-xs flex items-center gap-2 hover:border-zinc-500 transition"
+                                    >
+                                        <span>Filter Window</span>
+                                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                                    </button>
+
+                                    {isGraphSelectOpen && (
+                                        <div className="absolute right-0 top-full mt-1 w-40 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 overflow-hidden">
+                                            <button onClick={() => handleGraphChange(1, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition border-b border-zinc-700/40">24 Hours</button>
+                                            <button onClick={() => handleGraphChange(7, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition border-b border-zinc-700/40">7 Days</button>
+                                            <button onClick={() => handleGraphChange(30, undefined, undefined)} className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-700 transition">30 Days</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={latencyData}>
+                                    <CartesianGrid stroke="var(--chart-5)" />
+                                    {/* Map the horizontal labels to your "time" string key */}
+                                    <XAxis dataKey="time" stroke="#71717a" fontSize={10} interval="preserveStartEnd" // Automatically hides labels to prevent overlapping
+                                        minTickGap={10}             // Ensures a minimum spacing gap of 30 pixels between text blocks
+                                    />
+
+                                    {/* The vertical tracking scale */}
+                                    <YAxis stroke="#71717a" fontSize={12} tickFormatter={(val) => msFormatter(val)} />
+
+                                    <Tooltip
+                                        contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} formatter={(val) => msFormatter(val as number)}
+                                    />
+
+                                    {/* This is what was missing! Maps the line curve to your "latency" integer value */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey="latency"
+                                        stroke="#10b981"  // Clean Emerald Green line
+                                        strokeWidth={2}
+                                        dot={false}       // Removes bulky node dots for a smooth premium look
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
 
                         {/* Status Timeline Graph */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-8 h-80 flex flex-col items-center justify-center">
-                            <Activity className="w-12 h-12 text-zinc-700 mb-4" />
-                            <p className="text-zinc-500 text-sm font-medium">Status Timeline</p>
-                            <p className="text-zinc-600 text-xs mt-2">Graph placeholder - Chart will be inserted here</p>
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-8 h-96 flex flex-col items-center justify-center">
+                            <Activity className="w-12 h-12 text-zinc-800 mb-2" />
+                            <p className="text-zinc-400 text-sm font-medium">Uptime State Records</p>
+                            <p className="text-zinc-600 text-xs mt-1">Timeline map component logs compile here</p>
                         </div>
                     </div>
                 </div>

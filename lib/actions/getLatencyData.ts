@@ -1,23 +1,72 @@
 "use server";
 
 import { auth } from '@/auth';
+import { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
+import { differenceInDays, eachDayOfInterval, interval, startOfDay } from 'date-fns';
 
-export const getLatencyData = async (id: string) => {
+export const getLatencyData = async (id: string, startDate: Date, endDate: Date) => {
     try {
         const session = await auth();
-        
+
         if (!session?.user?.id) {
             throw new Error('Unauthorized: User not found in session');
         }
-        
-        const logs = await prisma.latencyLog.findMany({where: {routeId: id}, include: {monitoredRoute: true}});
 
-        // console.log(websites);
+        const createdAtQuery: Prisma.LatencyLogWhereInput["createdAt"] = {};
+        if (startDate) createdAtQuery.gte = startDate;
+        if (endDate) createdAtQuery.lte = endDate;
+
+        const logs = await prisma.latencyLog.findMany({ where: { routeId: id, createdAt: createdAtQuery }, orderBy: { createdAt: "asc" }, include: { monitoredRoute: true } });
+
+        console.log("logs:", logs);
+
+        const formattedlogs = logs.map((log) => (
+            {
+                time: new Date(log.createdAt).toLocaleString([], {
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                latency: log.latencyMs
+            }
+        ));
+
+        const isGreaterThanADay = differenceInDays(endDate, startDate) > 1;
+        if (!isGreaterThanADay) return {
+            success: true,
+            data: formattedlogs,
+            message: 'Data fetched successfully.'
+        } 
+
+        // Group raw logs into calendar day buckets (e.g., "Jun 19")
+        const groups: Record<string, number[]> = {};
+
+        logs.forEach(log => {
+            const day = new Date(log.createdAt).toLocaleDateString([], {
+                month: 'short',
+                day: '2-digit'
+            });
+
+            if (!groups[day]) groups[day] = [];
+            groups[day].push(log.latencyMs);
+        });
+
+        // Map the buckets into a unified daily average array format for Recharts
+        const dailyAverages = Object.keys(groups).map(day => {
+            const sum = groups[day].reduce((a, b) => a + b, 0);
+            const avg = Math.round(sum / groups[day].length);
+
+            return {
+                time: day, // Becomes "Jun 19", "Jun 20", etc.
+                latency: avg
+            };
+        });
 
         return {
             success: true,
-            data: logs,
+            data: dailyAverages,
             message: 'Data fetched successfully.'
         };
     } catch (error) {
@@ -25,33 +74,3 @@ export const getLatencyData = async (id: string) => {
         throw new Error(error instanceof Error ? error.message : 'Failed to get logs.');
     }
 }
-
-
-
-// model Website {
-//   id              String           @id @default(cuid())
-//   userId          String
-//   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-//   name            String
-//   baseUrl         String           // e.g., "https://meetnow-backend.onrender.com"
-//   hostingProvider String           // e.g., "RENDER", "VERCEL", "RAILWAY"
-//   addedAt         DateTime         @default(now())
-
-//   // The nested routes now point to a relational table
-//   monitoredRoutes MonitoredRoute[] 
-// }
-
-// model MonitoredRoute {
-//   id               String            @id @default(cuid())
-//   websiteId        String
-//   website          Website           @relation(fields: [websiteId], references: [id], onDelete: Cascade)
-  
-//   routePath        String            // e.g., "/" or "/api/v1/health"
-//   routeType        RouteType         // Enum validation split
-//   currentCondition CurrentCondition  @default(OPERATIONAL) // Instant query cache lookups
-//   updatedAt        DateTime          @updatedAt // Auto-updates on every latency log insertion for real-time status reflection
-
-//   // Connects directly to our performance graph records
-//   latencyLogs      LatencyLog[]      
-// }
