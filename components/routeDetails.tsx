@@ -1,5 +1,8 @@
+'use client';
 
 import { differenceInDays, differenceInHours, differenceInMinutes, format, parse } from "date-fns";
+import { DeleteRoute } from "@/lib/actions/deleteRoute";
+import { useRouter } from "next/navigation";
 
 
 interface Website {
@@ -29,7 +32,7 @@ interface RouteDetailsProps {
 }
 
 export function RouteDetails({latencyData, currentRoute} : RouteDetailsProps) {
-
+    const router = useRouter();
     
     function parseFlexibleDateString(dateStr: string): Date {
         const baseDate = new Date(); // Fallback reference for missing year details
@@ -46,6 +49,15 @@ export function RouteDetails({latencyData, currentRoute} : RouteDetailsProps) {
             // Expected format match: "Jun 22" (No time data available)
             return parse(dateStr, "MMM dd", baseDate);
         }
+    }
+
+    const handleDelete = async () => {
+        if (confirm("Are you sure you want to delete this route?")) {
+            const newRouteRedirect = await DeleteRoute(currentRoute.id);
+            if (newRouteRedirect.data?.id) router.push(`/sites/${newRouteRedirect.data?.id}`);
+            else router.push('/sites');
+        }
+
     }
 
     return (
@@ -86,6 +98,14 @@ export function RouteDetails({latencyData, currentRoute} : RouteDetailsProps) {
                     }
                 </p>
             </div>
+        </div>
+        <div className="flex justify-end">
+            <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/70 hover:text-white"
+            >
+                Delete Route
+            </button>
         </div>
     </div>
     )

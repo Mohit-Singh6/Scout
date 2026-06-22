@@ -120,59 +120,67 @@ export default async function Sites() {
                                 const statusStyles = getStatusStyles(status);
                                 const hasRoutes = website.monitoredRoutes.length > 0;
 
-                                return (
-                                    <Link key={website.id} href={`/sites/${website.monitoredRoutes[0].id}`}>
-                                        <div className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 hover:border-emerald-500/50 hover:bg-zinc-900/60 cursor-pointer backdrop-blur-sm mt-3">
-                                            <div className="flex items-center justify-between gap-4">
-                                                {/* Left Section - Site Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="mb-1 text-lg font-semibold text-zinc-50 group-hover:text-emerald-400 transition truncate">
-                                                        {website.name}
-                                                    </h3>
-                                                    <p className="mb-2 text-sm text-zinc-400 truncate">
-                                                        {website.baseUrl}
-                                                    </p>
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="text-xs px-2 py-1 rounded-full bg-zinc-800/50 text-zinc-300">
-                                                            {website.hostingProvider}
-                                                        </span>
-                                                        <span className="text-xs text-zinc-500">
-                                                            {website.monitoredRoutes.length} route{website.monitoredRoutes.length !== 1 ? 's' : ''}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right Section - Status */}
-                                                {!hasRoutes ?
-                                                    <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
-                                                        <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${statusStyles.badge}`}>
-                                                            <span className={`inline-block size-2 rounded-full ${statusStyles.dot}`} />
-                                                            <span className="text-sm font-medium">{statusStyles.text}</span>
-                                                        </div>
-                                                        <svg
-                                                            className="size-5 text-zinc-500 group-hover:text-emerald-400 transition"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M9 5l7 7-7 7"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                    : <Link
-                                                        href={`/edit/${website.id}`}
-                                                        className="px-4 py-2 text-sm rounded-lg bg-zinc-800/40 text-emerald-400 transition duration-200 hover:bg-emerald-500/10 hover:text-emerald-300 active:scale-95 whitespace-nowrap"
-                                                    >
-                                                        + Add first route
-                                                    </Link>
-                                                }
+                                const cardContent = (
+                                    <div className="flex items-center justify-between gap-4">
+                                        {/* Left Section - Site Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="mb-1 text-lg font-semibold text-zinc-50 group-hover:text-emerald-400 transition truncate">
+                                                {website.name}
+                                            </h3>
+                                            <p className="mb-2 text-sm text-zinc-400 truncate">
+                                                {website.baseUrl}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-xs px-2 py-1 rounded-full bg-zinc-800/50 text-zinc-300">
+                                                    {website.hostingProvider}
+                                                </span>
+                                                <span className="text-xs text-zinc-500">
+                                                    {website.monitoredRoutes.length} route{website.monitoredRoutes.length !== 1 ? 's' : ''}
+                                                </span>
                                             </div>
                                         </div>
+
+                                        {/* Right Section - Status or Button */}
+                                        {hasRoutes ?
+                                            <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
+                                                <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${statusStyles.badge}`}>
+                                                    <span className={`inline-block size-2 rounded-full ${statusStyles.dot}`} />
+                                                    <span className="text-sm font-medium">{statusStyles.text}</span>
+                                                </div>
+                                                <svg
+                                                    className="size-5 text-zinc-500 group-hover:text-emerald-400 transition"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M9 5l7 7-7 7"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            : <Link
+                                                href={`/edit/${website.id}`}
+                                                className="px-4 py-2 text-sm rounded-lg bg-zinc-800/40 text-zinc-200 transition duration-200 hover:bg-emerald-500/20 hover:text-emerald-300 whitespace-nowrap"
+                                            >
+                                                + Add first route
+                                            </Link>
+                                        }
+                                    </div>
+                                );
+
+                                return hasRoutes ? (
+                                    <Link key={website.id} href={`/sites/${website.monitoredRoutes[0].id}`}>
+                                        <div className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 hover:border-emerald-500/50 hover:bg-zinc-900/60 cursor-pointer backdrop-blur-sm mt-3">
+                                            {cardContent}
+                                        </div>
                                     </Link>
+                                ) : (
+                                    <div key={website.id} className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition duration-200 backdrop-blur-sm mt-3 hover:border-emerald-500/50">
+                                        {cardContent}
+                                    </div>
                                 );
                             })}
                         </div>

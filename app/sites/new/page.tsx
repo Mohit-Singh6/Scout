@@ -131,19 +131,17 @@ export default function NewSitePage() {
         }
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         // Validate form data
         if (!validateFields()) {
             return;
         }
 
-
-
         // call addWebsite function
         const data = {...formData, monitoredRoutes: routeData};
 
-        addWebsite(data);
-        window.location.href = '/sites'; // Redirect to dashboard after submission
+        const websiteData = (await addWebsite(data)).data;
+        window.location.href = `/sites + ${websiteData.monitoredRoutes[0].id}`; // Redirect to dashboard after submission
     }
 
     return (

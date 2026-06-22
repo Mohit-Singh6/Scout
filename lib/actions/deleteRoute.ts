@@ -2,11 +2,10 @@
 
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { useRouter } from 'next/navigation';
 
 export const DeleteRoute = async (id: string) => {
     try {
-        const router = useRouter();
+        // const router = useRouter();
         const session = await auth();
         
         if (!session?.user?.id) {
@@ -22,16 +21,9 @@ export const DeleteRoute = async (id: string) => {
             }
         });
 
-        if (newRouteRedirect) {
-            router.push(`/sites/${newRouteRedirect.id}`);
-        }
-        else {
-            router.push(`/sites`);
-        }
-
         return {
             success: true,
-            data: routeData,
+            data: newRouteRedirect,
             message: 'Data fetched successfully.'
         };
     } catch (error) {

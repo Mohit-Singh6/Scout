@@ -48,42 +48,6 @@ interface DayLog {
 }
 
 
-function getStatusStyles(status: string) {
-    switch (status) {
-        case 'OPERATIONAL':
-            return {
-                badge: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30',
-                dot: 'bg-emerald-500',
-                text: 'UP'
-            };
-        case 'DEGRADED':
-            return {
-                badge: 'bg-amber-950/40 text-amber-300 border-amber-500/30',
-                dot: 'bg-amber-500',
-                text: 'DEGRADED'
-            };
-        case 'DOWN':
-            return {
-                badge: 'bg-red-950/40 text-red-300 border-red-500/30',
-                dot: 'bg-red-500',
-                text: 'DOWN'
-            };
-        case 'TIMEOUT':
-            return {
-                badge: 'bg-red-950/40 text-red-300 border-red-500/30',
-                dot: 'bg-red-500',
-                text: 'TIMEOUT'
-            };
-        default:
-            return {
-                badge: 'bg-zinc-800/40 text-zinc-400 border-zinc-600/30',
-                dot: 'bg-zinc-400',
-                text: 'UNKNOWN'
-            };
-    }
-}
-
-
 interface PageProps {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ range?: string; stDate?: string; endDate?: string }>; // For: ?range=7d
@@ -107,7 +71,7 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [startDateLabel, setStartDateLabel] = useState<string>('24h ago');
     const [endDateLabel, setEndDateLabel] = useState<string>('Now');
     const [aiSumm, setAiSumm] = useState<string>('');
-    
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -221,7 +185,51 @@ export default function Sites({ params, searchParams }: PageProps) {
         loadData();
     }, [params, searchParams]);
 
-    
+
+
+    function getStatusStyles(status: string) {
+        if (latencyData.length == 0) return {
+            badge: 'bg-zinc-800/40 text-zinc-400 border-zinc-600/30',
+            dot: 'bg-zinc-400',
+            text: 'UNKNOWN'
+        };
+        switch (status) {
+            case 'OPERATIONAL':
+                return {
+                    badge: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30',
+                    dot: 'bg-emerald-500',
+                    text: 'UP'
+                };
+            case 'DEGRADED':
+                return {
+                    badge: 'bg-amber-950/40 text-amber-300 border-amber-500/30',
+                    dot: 'bg-amber-500',
+                    text: 'DEGRADED'
+                };
+            case 'DOWN':
+                return {
+                    badge: 'bg-red-950/40 text-red-300 border-red-500/30',
+                    dot: 'bg-red-500',
+                    text: 'DOWN'
+                };
+            case 'TIMEOUT':
+                return {
+                    badge: 'bg-red-950/40 text-red-300 border-red-500/30',
+                    dot: 'bg-red-500',
+                    text: 'TIMEOUT'
+                };
+            default:
+                return {
+                    badge: 'bg-zinc-800/40 text-zinc-400 border-zinc-600/30',
+                    dot: 'bg-zinc-400',
+                    text: 'UNKNOWN'
+                };
+        }
+    }
+
+
+
+
 
     function getRangeLabel(): string {
         switch (timeRangeType) {
@@ -368,7 +376,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
 
                                 {/* Route Details */}
-                                <RouteDetails {...{latencyData, currentRoute}}/>
+                                <RouteDetails {...{ latencyData, currentRoute }} />
                             </div>
                         </div>
 
@@ -382,7 +390,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         {statusStyles.text}
                                     </span>
                                 </div>
-                                
+
 
                                 {aiSumm && (
                                     <div className="text-sm text-zinc-300 leading-relaxed mb-4">
@@ -440,7 +448,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                             </div>
 
                             {!isLoadingGraph ? (
-                                <LatencyGraph latencyData={latencyData} timeRangeType={timeRangeType}/>
+                                <LatencyGraph latencyData={latencyData} timeRangeType={timeRangeType} />
                             ) : (
                                 <div className="h-full w-full text-zinc-50 flex items-center justify-center">
                                     <Spinner className="size-8" />
@@ -467,7 +475,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                                 {/* 2. Middle Section: Hover Details & The Matrix Strip */}
                                 {!isLoadingGraph ? (
-                                    <StatusGraph {...{uptimeData, latencyData, startDateLabel, endDateLabel, aiSumm, timeRangeType}} />
+                                    <StatusGraph {...{ uptimeData, latencyData, startDateLabel, endDateLabel, aiSumm, timeRangeType }} />
                                 ) : (
                                     <div className="h-full w-full text-zinc-50 flex items-center justify-center">
                                         <Spinner className="size-8" />
