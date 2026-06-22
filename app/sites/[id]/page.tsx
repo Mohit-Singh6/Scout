@@ -10,12 +10,15 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
-import { differenceInDays, differenceInHours, differenceInMilliseconds, differenceInMinutes, format, parse, subDays, subHours } from "date-fns";
+import { subDays, subHours } from "date-fns";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getLatencyData } from "@/lib/actions/getLatencyData";
 import { getPercentageUptime } from "@/lib/actions/getPercentageUptime";
 import { getAiSummary } from "@/lib/actions/getAiSummary";
+
+import { RouteDetails } from "@/components/routeDetails";
+import { LatencyGraph } from "@/components/graphs/latencyGraph";
+import { StatusGraph } from "@/components/graphs/statusGraph";
 
 interface MonitoredRoute {
     id: string;
@@ -44,12 +47,6 @@ interface DayLog {
     status?: number;
 }
 
-function getStatusCodeStyles(statusCode: number) {
-    if (statusCode >= 200 && statusCode < 400) {
-        return 'bg-emerald-500 hover:bg-emerald-400';
-    }
-    return 'bg-red-500 hover:bg-red-400';
-}
 
 function getStatusStyles(status: string) {
     switch (status) {
@@ -86,44 +83,6 @@ function getStatusStyles(status: string) {
     }
 }
 
-function getRelativeTime(date: Date | string): { relative: string; exact: string } {
-    const now = new Date();
-    const pastDate = new Date(date);
-    const diffMs = now.getTime() - pastDate.getTime();
-    const diffSecs = Math.floor(diffMs / 1000);
-    const diffMins = Math.floor(diffSecs / 60);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    const diffMonths = Math.floor(diffDays / 30);
-    const diffYears = Math.floor(diffMonths / 12);
-
-    let relative = '';
-    if (diffSecs < 60) {
-        relative = 'just now';
-    } else if (diffMins < 60) {
-        relative = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    } else if (diffHours < 24) {
-        relative = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else if (diffDays < 30) {
-        relative = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    } else if (diffMonths < 12) {
-        relative = `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
-    } else {
-        relative = `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
-    }
-
-    const exact = pastDate.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
-
-    return { relative, exact };
-}
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -144,11 +103,11 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [latencyData, setLatencyData] = useState<LatencyChartPoint[]>([]);
     const [uptimeData, setUptimeData] = useState<DayLog[]>([]);
 
-    const [hoveredDay, setHoveredDay] = useState<DayLog | null>(null);
     const [timeRangeType, setTimeRangeType] = useState<'24h' | '7days' | '30days' | 'custom'>('24h');
     const [startDateLabel, setStartDateLabel] = useState<string>('24h ago');
     const [endDateLabel, setEndDateLabel] = useState<string>('Now');
     const [aiSumm, setAiSumm] = useState<string>('');
+    
 
     useEffect(() => {
         const loadData = async () => {
@@ -262,27 +221,7 @@ export default function Sites({ params, searchParams }: PageProps) {
         loadData();
     }, [params, searchParams]);
 
-    function getCellColor(day: DayLog): string {
-        // For 24-hour data (has status code)
-        if (day.status !== undefined) {
-            return getStatusCodeStyles(day.status);
-        }
-        // For multi-day data (has uptime percentage)
-        if (day.uptimePerc !== undefined) {
-            const pct = day.uptimePerc;
-            if (pct >= 95) return "bg-emerald-500 hover:bg-emerald-400";       // Highest Green
-            if (pct >= 70) return "bg-emerald-600/60 hover:bg-emerald-500/80"; // Lighter Green
-            if (pct >= 40) return "bg-amber-500 hover:bg-amber-400";           // Yellow
-            return "bg-red-500 hover:bg-red-400";                              // `Red`
-        }
-        return "bg-zinc-400 hover:bg-zinc-300";
-    }
-    function getUptimeTextColor(pct: number): string {
-        if (pct >= 95) return "text-emerald-400";       // Highest Green
-        if (pct >= 70) return "text-emerald-500";      // Lighter Green
-        if (pct >= 40) return "text-amber-400";        // Yellow
-        return "text-red-500";                          // Red
-    }
+    
 
     function getRangeLabel(): string {
         switch (timeRangeType) {
@@ -329,26 +268,7 @@ export default function Sites({ params, searchParams }: PageProps) {
     const statusStyles = currentRoute ? getStatusStyles(currentRoute.currentCondition) : getStatusStyles('UNKNOWN');
 
 
-    const msFormatter = (val: number) => {
-        return val + "ms"
-    }
 
-    function parseFlexibleDateString(dateStr: string): Date {
-        const baseDate = new Date(); // Fallback reference for missing year details
-
-        // 1. Check if the string contains a time element (e.g., "Jun 22 14:30" vs "Jun 22")
-        const hasTime = dateStr.includes(":");
-
-        
-        if (hasTime) {
-            const timeString = format(new Date(dateStr), "MMM dd, hh:mm a"); // because your computer's local clock is outputting a single-digit hour (like 8:34 AM instead of 08:34 AM).
-            // date-fns is extremely strict—if there is a tiny mismatch in spaces or digit lengths, it crashes completely.
-            return parse(timeString, "MMM dd, hh:mm a", baseDate);
-        } else {
-            // Expected format match: "Jun 22" (No time data available)
-            return parse(dateStr, "MMM dd", baseDate);
-        }
-    }
 
     if (isLoading) {
         return (
@@ -448,45 +368,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
 
                                 {/* Route Details */}
-                                <div className="mt-6 pt-6 border-t border-zinc-800/50">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-zinc-400 uppercase tracking-wider">Type</p>
-                                            <p className="text-sm font-medium text-zinc-50 mt-1">{currentRoute.routeType}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-zinc-400 uppercase tracking-wider">Last Checked</p>
-                                            <p className="text-sm font-medium text-zinc-50 mt-1">
-                                                {latencyData && latencyData.length > 0
-                                                    ? (() => {
-                                                        const lastCheckTime = parseFlexibleDateString(latencyData[latencyData.length - 1].time);
-                                                        console.log(lastCheckTime);
-
-                                                        // For now, show a dynamic relative time
-                                                        const now = new Date();
-                                                        const differenceMn = differenceInMinutes(now, lastCheckTime);
-                                                        const differenceHrs = differenceInHours(now, lastCheckTime);
-                                                        const differenceDays = differenceInDays(now, lastCheckTime);
-
-                                                        let relativeTime = 'Just now';
-                                                        if (differenceMn > 1) relativeTime = `${differenceMn} min${differenceMn > 1 ? 's' : ''} ago`;
-                                                        if (differenceHrs > 0) relativeTime = `${differenceHrs} hour${differenceHrs > 1 ? 's' : ''} ago`;
-                                                        if (differenceDays > 0) relativeTime = `${differenceDays} day${differenceDays > 1 ? 's' : ''} ago`;
-                                                        
-                                                        return relativeTime;
-                                                      })()
-                                                    : 'Never'
-                                                }
-                                            </p>
-                                            <p className="text-xs text-zinc-500 mt-1">
-                                                {latencyData && latencyData.length > 0
-                                                    ? String(latencyData[latencyData.length - 1].time)
-                                                    : 'No data'
-                                                }
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <RouteDetails {...{latencyData, currentRoute}}/>
                             </div>
                         </div>
 
@@ -558,38 +440,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                             </div>
 
                             {!isLoadingGraph ? (
-                                latencyData && latencyData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={latencyData}>
-                                        <CartesianGrid stroke="var(--chart-5)" />
-                                        {/* Map the horizontal labels to your "time" string key */}
-                                        <XAxis dataKey="time" stroke="#71717a" fontSize={10} interval="preserveStartEnd" // Automatically hides labels to prevent overlapping
-                                            minTickGap={10}             // Ensures a minimum spacing gap of 30 pixels between text blocks
-                                        />
-
-                                        {/* The vertical tracking scale */}
-                                        <YAxis stroke="#71717a" fontSize={12} tickFormatter={(val) => msFormatter(val)} />
-
-                                        <Tooltip
-                                            contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }} formatter={(val) => msFormatter(val as number)}
-                                        />
-
-                                        {/* This is what was missing! Maps the line curve to your "latency" integer value */}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="latency"
-                                            name={timeRangeType === '24h' ? "Latency" : "Avg. Latency"}
-                                            stroke="#10b981"  // Clean Emerald Green line
-                                            strokeWidth={2}
-                                            dot={false}       // Removes bulky node dots for a smooth premium look
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-full w-full text-zinc-400 flex items-center justify-center">
-                                        <span className="text-sm">No performance data available for this time period</span>
-                                    </div>
-                                )
+                                <LatencyGraph latencyData={latencyData} timeRangeType={timeRangeType}/>
                             ) : (
                                 <div className="h-full w-full text-zinc-50 flex items-center justify-center">
                                     <Spinner className="size-8" />
@@ -616,76 +467,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                                 {/* 2. Middle Section: Hover Details & The Matrix Strip */}
                                 {!isLoadingGraph ? (
-                                    <>
-                                        <div className="my-auto flex flex-col gap-3">
-                                            {/* Dynamic Text Box that responds to mouse hover */}
-                                            <div className="h-5 text-sm font-mono flex items-center justify-start">
-                                                {hoveredDay ? (
-                                                    <span className="text-zinc-200">
-                                                        {hoveredDay.time}:{" "}
-                                                        {hoveredDay.status !== undefined ? (
-                                                            <span className={hoveredDay.status >= 200 && hoveredDay.status < 400 ? "text-emerald-400 font-semibold" : "text-red-500 font-semibold"}>
-                                                                {hoveredDay.status} {hoveredDay.status >= 200 && hoveredDay.status < 400 ? '(UP)' : '(DOWN)'}
-                                                            </span>
-                                                        ) : (
-                                                            <span className={`font-semibold ${getUptimeTextColor(hoveredDay.uptimePerc || 0)}`}>
-                                                                {hoveredDay.uptimePerc}% Uptime
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-zinc-500">
-                                                        {timeRangeType === '24h' ? 'Hover for status codes' : 'Hover over rows for breakdown'}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* The 30 column container grid */}
-                                            {uptimeData && uptimeData.length > 0 ? (
-                                            <div className="flex items-center gap-1.5 w-full h-12">
-                                                {uptimeData.map((day, i) => (
-                                                    <div
-                                                        key={i}
-                                                        onMouseEnter={() => setHoveredDay(day)}
-                                                        onMouseLeave={() => setHoveredDay(null)}
-                                                        className={`flex-1 h-full rounded-[3px] cursor-pointer transition-all duration-150 hover:scale-y-115 ${getCellColor(day)}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                            ) : (
-                                                <div className="flex items-center justify-center h-12 w-full">
-                                                    <span className="text-xs text-zinc-500">No uptime data available for this time period</span>
-                                                </div>
-                                            )}
-
-                                            {/* Timeline bottom boundary metrics */}
-                                            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono px-0.5">
-                                                <span>{startDateLabel}</span>
-                                                <span>{endDateLabel}</span>
-                                            </div>
-                                        </div>
-
-
-                                        {/* 3. Bottom Section: Incident Analysis */}
-                                        <div className="border-t border-zinc-800/60 pt-4 mt-2">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <p className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">Incident Analysis</p>
-                                                <p className="text-[10px] text-zinc-500">
-                                                    {(latencyData && latencyData.length > 0 
-                                                        ? String(latencyData[latencyData.length - 1].time)
-                                                        : uptimeData && uptimeData.length > 0
-                                                        ? String(uptimeData[uptimeData.length - 1].time)
-                                                        : 'N/A'
-                                                    ) as any}
-                                                </p>
-                                            </div>
-                                            {aiSumm ? (
-                                                <p className="text-sm text-zinc-300 leading-relaxed">{aiSumm}</p>
-                                            ) : (
-                                                <p className="text-xs text-zinc-500 italic">No incidents recorded</p>
-                                            )}
-                                        </div>
-                                    </>
+                                    <StatusGraph {...{uptimeData, latencyData, startDateLabel, endDateLabel, aiSumm, timeRangeType}} />
                                 ) : (
                                     <div className="h-full w-full text-zinc-50 flex items-center justify-center">
                                         <Spinner className="size-8" />

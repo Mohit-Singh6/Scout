@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import httpStatusCodes from "http-status-codes";
 import { getAllRoutes } from "@/lib/actions/getAllRoutes";
 import { prisma } from "@/lib/prisma";
@@ -156,8 +156,18 @@ async function pingSingleRoute(route: MonitoredRoute) {
     }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
+
+        const cronHeaderKey = req.headers.get('cron-secret-key');
+        
+        if (!cronHeaderKey || cronHeaderKey !== process.env.CRON_SECRET_KEY) {
+            return NextResponse.json(
+                { error: "Access Denied: Header security token signature mismatch."}, 
+                { status: 401 }
+            );
+        }
+
         await prisma.latencyLog.deleteMany({
             where: {
                 createdAt: {lt: subDays(new Date(), 30)}
