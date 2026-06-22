@@ -96,7 +96,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                         ...route,
                         website: websiteDataRes.data // or use the 'website' data object from routeDataRes
                     }));
-                    
+
                     setAllRoutes(formattedRoutes as MonitoredRoute[]);
                 }
 
@@ -152,7 +152,8 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                 // Generate labels based on time range
                 if (rangeType === '24h') {
-                    const startTimeStr = startDateLocal.toLocaleString('en-US', {
+                    const startTimeStr = startDateLocal.toLocaleString('en-IN', {
+                        timeZone: "Asia/Kolkata",
                         month: 'short',
                         day: '2-digit',
                         hour: '2-digit',
@@ -162,16 +163,16 @@ export default function Sites({ params, searchParams }: PageProps) {
                     setStartDateLabel(`${startTimeStr}`);
                     setEndDateLabel('Now');
                 } else if (rangeType === '7days') {
-                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    const startDateStr = startDateLocal.toLocaleDateString('en-IN', { month: 'short', day: '2-digit', timeZone: "Asia/Kolkata" });
                     setStartDateLabel(startDateStr);
                     setEndDateLabel('Today');
                 } else if (rangeType === '30days') {
-                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    const startDateStr = startDateLocal.toLocaleDateString('en-IN', { month: 'short', day: '2-digit', timeZone: "Asia/Kolkata" });
                     setStartDateLabel(startDateStr);
                     setEndDateLabel('Today');
                 } else if (rangeType === 'custom') {
-                    const startDateStr = startDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-                    const endDateStr = endDateLocal.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    const startDateStr = startDateLocal.toLocaleDateString('en-IN', { month: 'short', day: '2-digit', timeZone: "Asia/Kolkata" });
+                    const endDateStr = endDateLocal.toLocaleDateString('en-IN', { month: 'short', day: '2-digit', timeZone: "Asia/Kolkata" });
                     setStartDateLabel(startDateStr);
                     setEndDateLabel(endDateStr);
                 }

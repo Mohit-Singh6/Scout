@@ -24,6 +24,8 @@ export const getLatencyData = async (id: string, startDate: Date, endDate: Date)
         const formattedlogs = logs.map((log) => (
             {
                 time: new Date(log.createdAt).toLocaleString([], {
+                    timeZone: "Asia/Kolkata",
+                    hour12: true,
                     month: 'short',
                     day: '2-digit',
                     hour: '2-digit',
@@ -45,6 +47,8 @@ export const getLatencyData = async (id: string, startDate: Date, endDate: Date)
 
         logs.forEach(log => {
             const day = new Date(log.createdAt).toLocaleDateString([], {
+                timeZone: "Asia/Kolkata",
+                hour12: true,
                 month: 'short',
                 day: '2-digit'
             });
