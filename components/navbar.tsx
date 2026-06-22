@@ -100,7 +100,7 @@ function Navbar() {
               </Link>
               <Link
                 className="rounded-full bg-emerald-600 px-5 py-2 font-medium text-zinc-950 transition hover:bg-emerald-700 text-base"
-                href="#track"
+                href="/signin"
               >
                 Track your site
               </Link>

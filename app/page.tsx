@@ -63,7 +63,7 @@ export default function Home() {
 
             <div className="mt-9 flex flex-col gap-4 sm:flex-row">
               <Link
-                href="#track"
+                href="/signin"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-6 text-base font-semibold text-zinc-950 transition hover:bg-emerald-700"
               >
                 Track your site

@@ -10,13 +10,12 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
-
-
 import { subDays, subHours } from "date-fns";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getLatencyData } from "@/lib/actions/getLatencyData";
 import { getPercentageUptime } from "@/lib/actions/getPercentageUptime";
+import { getAiSummary } from "@/lib/actions/getAiSummary";
 
 interface MonitoredRoute {
     id: string;
@@ -149,6 +148,7 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [timeRangeType, setTimeRangeType] = useState<'24h' | '7days' | '30days' | 'custom'>('24h');
     const [startDateLabel, setStartDateLabel] = useState<string>('24h ago');
     const [endDateLabel, setEndDateLabel] = useState<string>('Now');
+    const [aiSumm, setAiSumm] = useState<string>('');
 
     useEffect(() => {
         const loadData = async () => {
@@ -246,7 +246,10 @@ export default function Sites({ params, searchParams }: PageProps) {
                     setEndDateLabel(endDateStr);
                 }
 
-                console.log("UptimeData: ", uptimeData);
+                // console.log("UptimeData: ", uptimeData);
+
+                const aiSum = (await getAiSummary(id)).data;
+                setAiSumm(aiSum || '');
 
             } catch (error) {
                 console.error('Error loading route data:', error);
@@ -459,6 +462,9 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         {statusStyles.text}
                                     </span>
                                 </div>
+
+                                <h1>{aiSumm}</h1>
+
                             </div>
                             <div className={`px-3 py-2 rounded-lg border ${statusStyles.badge} text-sm text-center`}>
                                 {statusStyles.text}
