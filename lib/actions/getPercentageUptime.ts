@@ -56,7 +56,8 @@ export const getPercentageUptime = async (id: string, startDate: Date, endDate: 
         // Map the buckets into a unified daily average array format for Recharts
         const dailyAverages = Object.keys(groups).map(day => {
             const sum = groups[day].reduce((a, b) => a + b, 0);
-            const percentage = Math.round(sum / groups[day].length) * 100;
+            const percentage = Math.round(sum / groups[day].length * 100);
+            console.log("Sum, len, perc: ", sum, groups[day].length, percentage);
 
             return {
                 time: day, // Becomes "Jun 19", "Jun 20", etc.

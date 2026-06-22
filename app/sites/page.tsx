@@ -19,16 +19,16 @@ interface Website {
 
 function getOverallStatus(routes: MonitoredRoute[]): 'OPERATIONAL' | 'DEGRADED' | 'DOWN' | 'TIMEOUT' {
     if (!routes || routes.length === 0) return 'OPERATIONAL';
-    
+
     const hasDown = routes.some(r => r.currentCondition === 'DOWN');
     if (hasDown) return 'DOWN';
-    
+
     const hasDegraded = routes.some(r => r.currentCondition === 'DEGRADED');
     if (hasDegraded) return 'DEGRADED';
-    
+
     const hasTimedout = routes.some(r => r.currentCondition === 'TIMEOUT');
     if (hasTimedout) return 'TIMEOUT';
-    
+
     return 'OPERATIONAL';
 }
 
@@ -75,7 +75,7 @@ export default async function Sites() {
         <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
             {/* Background Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
-            
+
             {/* Blur Effects */}
             <div className="absolute left-1/2 top-32 h-80 w-80 -translate-x-1/2 rounded-full bg-emerald-950/30 blur-3xl" />
             <div className="absolute right-0 bottom-32 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
@@ -118,6 +118,7 @@ export default async function Sites() {
                             {websites.map((website) => {
                                 const status = getOverallStatus(website.monitoredRoutes);
                                 const statusStyles = getStatusStyles(status);
+                                const hasRoutes = website.monitoredRoutes.length > 0;
 
                                 return (
                                     <Link key={website.id} href={`/sites/${website.monitoredRoutes[0].id}`}>
@@ -142,25 +143,33 @@ export default async function Sites() {
                                                 </div>
 
                                                 {/* Right Section - Status */}
-                                                <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
-                                                    <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${statusStyles.badge}`}>
-                                                        <span className={`inline-block size-2 rounded-full ${statusStyles.dot}`} />
-                                                        <span className="text-sm font-medium">{statusStyles.text}</span>
+                                                {!hasRoutes ?
+                                                    <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
+                                                        <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${statusStyles.badge}`}>
+                                                            <span className={`inline-block size-2 rounded-full ${statusStyles.dot}`} />
+                                                            <span className="text-sm font-medium">{statusStyles.text}</span>
+                                                        </div>
+                                                        <svg
+                                                            className="size-5 text-zinc-500 group-hover:text-emerald-400 transition"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M9 5l7 7-7 7"
+                                                            />
+                                                        </svg>
                                                     </div>
-                                                    <svg
-                                                        className="size-5 text-zinc-500 group-hover:text-emerald-400 transition"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
+                                                    : <Link
+                                                        href={`/edit/${website.id}`}
+                                                        className="px-4 py-2 text-sm rounded-lg bg-zinc-800/40 text-emerald-400 transition duration-200 hover:bg-emerald-500/10 hover:text-emerald-300 active:scale-95 whitespace-nowrap"
                                                     >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 5l7 7-7 7"
-                                                        />
-                                                    </svg>
-                                                </div>
+                                                        + Add first route
+                                                    </Link>
+                                                }
                                             </div>
                                         </div>
                                     </Link>

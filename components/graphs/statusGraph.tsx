@@ -34,19 +34,22 @@ export function StatusGraph({ uptimeData, latencyData, startDateLabel, endDateLa
         // For multi-day data (has uptime percentage)
         if (day.uptimePerc !== undefined) {
             const pct = day.uptimePerc;
-            if (pct >= 95) return "bg-emerald-500 hover:bg-emerald-400";       // Highest Green
-            if (pct >= 70) return "bg-emerald-600/60 hover:bg-emerald-500/80"; // Lighter Green
-            if (pct >= 40) return "bg-amber-500 hover:bg-amber-400";           // Yellow
-            return "bg-red-500 hover:bg-red-400";                              // `Red`
+
+            if (pct >= 95) return "bg-emerald-500 hover:bg-emerald-400"; // Perfect / Near Perfect Uptime
+            if (pct >= 70) return "bg-emerald-600/70 hover:bg-emerald-600"; // Good Uptime (Minor blips)
+            if (pct >= 50) return "bg-amber-500 hover:bg-amber-400";     // Warning (Noticeable degradation)
+            if (pct >= 30) return "bg-orange-500 hover:bg-orange-400";   // Major Degradation
+            return "bg-red-600 hover:bg-red-500";                      // Down / Outage (Critical)
         }
         return "bg-zinc-400 hover:bg-zinc-300";
     }
 
     function getUptimeTextColor(pct: number): string {
-        if (pct >= 95) return "text-emerald-400";       // Highest Green
-        if (pct >= 70) return "text-emerald-500";      // Lighter Green
-        if (pct >= 40) return "text-amber-400";        // Yellow
-        return "text-red-500";                          // Red
+        if (pct >= 95) return "text-emerald-500";       // Highest Green
+        if (pct >= 70) return "text-emerald-600";      // Lighter Green
+        if (pct >= 40) return "text-amber-500";        // Yellow
+        if (pct >= 30) return "text-orange-500";        // Yellow
+        return "text-red-600";                          // Red
     }
 
 
