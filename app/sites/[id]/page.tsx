@@ -4,10 +4,10 @@
 // for client components that console.log() things are printed on the client side only not on the vs code, (prints only on the browser)
 
 import { getRouteById } from "@/lib/actions/getRouteById"
-import { getWebsiteById } from "@/lib/actions/getWebsiteById"
+import { getWebsiteByRouteId } from "@/lib/actions/getWebsiteByRouteId"
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown, ArrowLeft, Activity, Trash2 } from "lucide-react";
+import { ChevronDown, ArrowLeft, Activity, Trash2, Edit2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
 import { subDays, subHours } from "date-fns";
@@ -82,7 +82,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                 const [routeDataRes, websiteDataRes] = await Promise.all([
                     getRouteById(id),
-                    getWebsiteById(id)
+                    getWebsiteByRouteId(id)
                 ]);
 
                 if (routeDataRes.data) {
@@ -278,7 +278,7 @@ export default function Sites({ params, searchParams }: PageProps) {
 
     const handleDeleteWebsite = async () => {
         if (confirm("Are you sure you want to delete this website and all its routes? This action cannot be undone.")) {
-            await DeleteWebsite(website.id);
+            if (website) await DeleteWebsite(website.id);
             router.push('/sites');
         }
     };
@@ -333,13 +333,23 @@ export default function Sites({ params, searchParams }: PageProps) {
                                 <p className="text-sm text-zinc-400 mt-1">{website.baseUrl}</p>
                             </div>
                         </div>
-                        <button
-                            onClick={handleDeleteWebsite}
-                            className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/60 hover:text-white active:scale-95 flex items-center gap-2"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => router.push(`/edit/${website.id}`)}
+                                className="px-4 py-2 rounded-md bg-emerald-950/20 text-emerald-300 transition duration-200 cursor-pointer hover:bg-emerald-500/20 hover:text-emerald-100 flex items-center gap-2"
+                                title="Edit website"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                                Edit 
+                            </button>
+                            <button
+                                onClick={handleDeleteWebsite}
+                                className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/60 hover:text-white flex items-center gap-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                            </button>
+                        </div>
                     </div>
 
                     {/* Route Selector & Status Card */}

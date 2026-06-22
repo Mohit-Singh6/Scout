@@ -3,7 +3,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
-export const getWebsiteById = async (id: string) => {
+export const getWebsiteByRouteId = async (id: string) => {
     try {
         const session = await auth();
         
@@ -11,8 +11,11 @@ export const getWebsiteById = async (id: string) => {
             throw new Error('Unauthorized: User not found in session');
         }
         
-        const website = await prisma.website.findFirst({where: { id: id}  
-        , include: {monitoredRoutes: true}});
+        const website = await prisma.website.findFirst({where: { monitoredRoutes: { some: { id: id  }
+        }}, include: {monitoredRoutes: true}});
+
+        // console.log(websites);
+        
 
         return {
             success: true,
