@@ -102,7 +102,7 @@ export function RouteDetails({latencyData, currentRoute} : RouteDetailsProps) {
         <div className="flex justify-end">
             <button
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/70 hover:text-white"
+                className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/60 hover:text-white"
             >
                 Delete Route
             </button>

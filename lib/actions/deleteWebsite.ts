@@ -3,7 +3,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
-export const DeleteRoute = async (id: string) => {
+export const DeleteWebsite = async (id: string) => {
     try {
         const session = await auth();
         
@@ -11,17 +11,11 @@ export const DeleteRoute = async (id: string) => {
             throw new Error('Unauthorized: User not found in session');
         }
         
-        const routeData = await prisma.monitoredRoute.delete({where: {id: id}, include: {website: true}});
-
-        const newRouteRedirect = await prisma.monitoredRoute.findFirst({
-            where: {
-                websiteId: routeData.websiteId
-            }
-        });
+        const websiteData = await prisma.website.delete({where: {id: id}});
 
         return {
             success: true,
-            data: newRouteRedirect,
+            data: websiteData,
             message: 'Data fetched successfully.'
         };
     } catch (error) {

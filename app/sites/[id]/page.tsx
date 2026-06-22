@@ -7,7 +7,7 @@ import { getRouteById } from "@/lib/actions/getRouteById"
 import { getWebsiteById } from "@/lib/actions/getWebsiteById"
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
+import { ChevronDown, ArrowLeft, Activity, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
 import { subDays, subHours } from "date-fns";
@@ -19,6 +19,7 @@ import { getAiSummary } from "@/lib/actions/getAiSummary";
 import { RouteDetails } from "@/components/routeDetails";
 import { LatencyGraph } from "@/components/graphs/latencyGraph";
 import { StatusGraph } from "@/components/graphs/statusGraph";
+import { DeleteWebsite } from "@/lib/actions/deleteWebsite";
 
 interface MonitoredRoute {
     id: string;
@@ -275,8 +276,12 @@ export default function Sites({ params, searchParams }: PageProps) {
 
     const statusStyles = currentRoute ? getStatusStyles(currentRoute.currentCondition) : getStatusStyles('UNKNOWN');
 
-
-
+    const handleDeleteWebsite = async () => {
+        if (confirm("Are you sure you want to delete this website and all its routes? This action cannot be undone.")) {
+            await DeleteWebsite(website.id);
+            router.push('/sites');
+        }
+    };
 
     if (isLoading) {
         return (
@@ -313,19 +318,28 @@ export default function Sites({ params, searchParams }: PageProps) {
             <div className="relative px-6 py-8 sm:px-10 lg:px-16 mt-20">
                 <div className="mx-auto max-w-7xl">
                     {/* Back Button & Header */}
-                    <div className="mb-8 flex items-center gap-4">
-                        <button
-                            onClick={() => router.back()}
-                            className="p-2 hover:bg-zinc-900/50 rounded-lg transition"
-                        >
-                            <ArrowLeft className="w-5 h-5 text-zinc-400 hover:text-emerald-400 transition" />
-                        </button>
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">
-                                <span className="text-zinc-50">{website.name}</span>
-                            </h1>
-                            <p className="text-sm text-zinc-400 mt-1">{website.baseUrl}</p>
+                    <div className="mb-8 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => router.back()}
+                                className="p-2 hover:bg-zinc-900/50 rounded-lg transition"
+                            >
+                                <ArrowLeft className="w-5 h-5 text-zinc-400 hover:text-emerald-400 transition" />
+                            </button>
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight">
+                                    <span className="text-zinc-50">{website.name}</span>
+                                </h1>
+                                <p className="text-sm text-zinc-400 mt-1">{website.baseUrl}</p>
+                            </div>
                         </div>
+                        <button
+                            onClick={handleDeleteWebsite}
+                            className="px-4 py-2 text-sm font-medium rounded-md bg-red-950/20 text-red-300 transition duration-200 cursor-pointer hover:bg-red-600/60 hover:text-white active:scale-95 flex items-center gap-2"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                        </button>
                     </div>
 
                     {/* Route Selector & Status Card */}
