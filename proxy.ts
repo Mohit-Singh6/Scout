@@ -15,7 +15,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [ // Only apply middleware to these paths, it would check for these paths and redirect if not logged in
-    '/sites/new',
-    '/sites'
+    '/sites/:path*'
   ],
 };
