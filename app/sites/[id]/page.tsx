@@ -91,7 +91,13 @@ export default function Sites({ params, searchParams }: PageProps) {
                 }
 
                 if (websiteDataRes.data) {
-                    setAllRoutes(websiteDataRes.data.monitoredRoutes || []);
+                    // ye befaaltu ke liye banana zaruri hai warna error aayega (ki website is not present in the websiteDataRes.data.monitoredRoutes || []) mein.
+                    const formattedRoutes = (websiteDataRes.data.monitoredRoutes || []).map(route => ({
+                        ...route,
+                        website: websiteDataRes.data // or use the 'website' data object from routeDataRes
+                    }));
+                    
+                    setAllRoutes(formattedRoutes as MonitoredRoute[]);
                 }
 
                 const { range, stDate, endDate } = await searchParams;
@@ -340,7 +346,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                                 title="Edit website"
                             >
                                 <Edit2 className="w-4 h-4" />
-                                Edit 
+                                Edit
                             </button>
                             <button
                                 onClick={handleDeleteWebsite}
