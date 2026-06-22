@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ArrowLeft, Activity } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
-import { subDays, subHours } from "date-fns";
+import { differenceInDays, differenceInHours, differenceInMilliseconds, differenceInMinutes, format, parse, subDays, subHours } from "date-fns";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getLatencyData } from "@/lib/actions/getLatencyData";
@@ -34,7 +34,7 @@ interface Website {
 }
 
 interface LatencyChartPoint {
-    time: Date | string;
+    time: string;
     latency: number;
 }
 
@@ -333,6 +333,22 @@ export default function Sites({ params, searchParams }: PageProps) {
         return val + "ms"
     }
 
+    function parseFlexibleDateString(dateStr: string): Date {
+        const baseDate = new Date(); // Fallback reference for missing year details
+
+        // 1. Check if the string contains a time element (e.g., "Jun 22 14:30" vs "Jun 22")
+        const hasTime = dateStr.includes(":");
+
+        
+        if (hasTime) {
+            const timeString = format(new Date(dateStr), "MMM dd, hh:mm a"); // because your computer's local clock is outputting a single-digit hour (like 8:34 AM instead of 08:34 AM).
+            // date-fns is extremely strict—if there is a tiny mismatch in spaces or digit lengths, it crashes completely.
+            return parse(timeString, "MMM dd, hh:mm a", baseDate);
+        } else {
+            // Expected format match: "Jun 22" (No time data available)
+            return parse(dateStr, "MMM dd", baseDate);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -441,10 +457,32 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         <div>
                                             <p className="text-xs text-zinc-400 uppercase tracking-wider">Last Checked</p>
                                             <p className="text-sm font-medium text-zinc-50 mt-1">
-                                                {getRelativeTime(website.addedAt).relative}
+                                                {latencyData && latencyData.length > 0
+                                                    ? (() => {
+                                                        const lastCheckTime = parseFlexibleDateString(latencyData[latencyData.length - 1].time);
+                                                        console.log(lastCheckTime);
+
+                                                        // For now, show a dynamic relative time
+                                                        const now = new Date();
+                                                        const differenceMn = differenceInMinutes(now, lastCheckTime);
+                                                        const differenceHrs = differenceInHours(now, lastCheckTime);
+                                                        const differenceDays = differenceInDays(now, lastCheckTime);
+
+                                                        let relativeTime = 'Just now';
+                                                        if (differenceMn > 1) relativeTime = `${differenceMn} min${differenceMn > 1 ? 's' : ''} ago`;
+                                                        if (differenceHrs > 0) relativeTime = `${differenceHrs} hour${differenceHrs > 1 ? 's' : ''} ago`;
+                                                        if (differenceDays > 0) relativeTime = `${differenceDays} day${differenceDays > 1 ? 's' : ''} ago`;
+                                                        
+                                                        return relativeTime;
+                                                      })()
+                                                    : 'Never'
+                                                }
                                             </p>
                                             <p className="text-xs text-zinc-500 mt-1">
-                                                {getRelativeTime(website.addedAt).exact}
+                                                {latencyData && latencyData.length > 0
+                                                    ? String(latencyData[latencyData.length - 1].time)
+                                                    : 'No data'
+                                                }
                                             </p>
                                         </div>
                                     </div>
@@ -455,18 +493,22 @@ export default function Sites({ params, searchParams }: PageProps) {
                         {/* Status Card */}
                         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 flex flex-col justify-between">
                             <div>
-                                <p className="text-xs text-zinc-400 uppercase tracking-wider mb-2">Current Status</p>
-                                <div className="flex items-center gap-3 mb-4">
+                                <p className="text-xs text-zinc-400 uppercase tracking-wider mb-3">Current Status</p>
+                                <div className="flex items-center gap-3 mb-6">
                                     <div className={`w-3 h-3 rounded-full ${statusStyles.dot} animate-pulse`} />
                                     <span className={`font-semibold text-lg ${statusStyles.badge.split(' ').slice(1).join(' ')}`}>
                                         {statusStyles.text}
                                     </span>
                                 </div>
+                                
 
-                                <h1>{aiSumm}</h1>
-
+                                {aiSumm && (
+                                    <div className="text-sm text-zinc-300 leading-relaxed mb-4">
+                                        {aiSumm}
+                                    </div>
+                                )}
                             </div>
-                            <div className={`px-3 py-2 rounded-lg border ${statusStyles.badge} text-sm text-center`}>
+                            <div className={`px-3 py-2 rounded-lg border ${statusStyles.badge} text-sm text-center font-medium`}>
                                 {statusStyles.text}
                             </div>
                         </div>
@@ -624,16 +666,24 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         </div>
 
 
-                                        {/* 3. Bottom Section: Mini Log Feed */}
+                                        {/* 3. Bottom Section: Incident Analysis */}
                                         <div className="border-t border-zinc-800/60 pt-4 mt-2">
-                                            <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-2">Recent Incidents</p>
-                                            <div className="flex items-center justify-between text-xs text-zinc-400 bg-zinc-950/40 p-2.5 rounded-lg border border-zinc-800/50">
-                                                <span className="flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                                    Minor outage recorded on Jun 15
-                                                </span>
-                                                <span className="text-[10px] text-zinc-500 font-mono">6 days ago</span>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">Incident Analysis</p>
+                                                <p className="text-[10px] text-zinc-500">
+                                                    {(latencyData && latencyData.length > 0 
+                                                        ? String(latencyData[latencyData.length - 1].time)
+                                                        : uptimeData && uptimeData.length > 0
+                                                        ? String(uptimeData[uptimeData.length - 1].time)
+                                                        : 'N/A'
+                                                    ) as any}
+                                                </p>
                                             </div>
+                                            {aiSumm ? (
+                                                <p className="text-sm text-zinc-300 leading-relaxed">{aiSumm}</p>
+                                            ) : (
+                                                <p className="text-xs text-zinc-500 italic">No incidents recorded</p>
+                                            )}
                                         </div>
                                     </>
                                 ) : (

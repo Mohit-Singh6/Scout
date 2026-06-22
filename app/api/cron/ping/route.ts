@@ -3,6 +3,7 @@ import httpStatusCodes from "http-status-codes";
 import { getAllRoutes } from "@/lib/actions/getAllRoutes";
 import { prisma } from "@/lib/prisma";
 import { analyzeErrorLog } from "@/lib/actions/analyzeErrorLog";
+import { subDays } from "date-fns";
 
 interface MonitoredRoute {
     id: string;
@@ -157,6 +158,12 @@ async function pingSingleRoute(route: MonitoredRoute) {
 
 export async function GET() {
     try {
+        await prisma.latencyLog.deleteMany({
+            where: {
+                createdAt: {lt: subDays(new Date(), 30)}
+            }
+        })
+
         const routes = (await getAllRoutes()).data as MonitoredRoute[];
         
         // Generate an array of active, un-awaited pending Promises
