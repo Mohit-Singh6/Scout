@@ -452,7 +452,7 @@ export default function Sites({ params, searchParams }: PageProps) {
                     </div>
 
                     {/* Graphs Section */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
                         {/* Latency Graph Box Container */}
                         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between z-10">
                             <div className="flex items-center justify-between mb-4">
@@ -488,10 +488,9 @@ export default function Sites({ params, searchParams }: PageProps) {
                             }
                         </div>
 
-
                         {/* Status Timeline Graph */}
                         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-3 h-96 flex flex-col items-center justify-center">
-                            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between w-full max-w-[600px]">
+                            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm p-6 h-96 flex flex-col justify-between w-full">
 
                                 {/* 1. Top Section: Header Info */}
                                 <div className="flex items-center justify-between">
@@ -499,9 +498,6 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
                                         <span className="text-sm font-medium text-zinc-300">System Availability</span>
                                     </div>
-                                    {/* <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded">
-                                        globalUptimeAverage % Uptime
-                                    </span> */}
                                 </div>
 
                                 {/* 2. Middle Section: Hover Details & The Matrix Strip */}

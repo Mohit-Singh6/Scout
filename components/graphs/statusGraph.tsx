@@ -87,7 +87,7 @@ export function StatusGraph({ uptimeData, latencyData, startDateLabel, endDateLa
 
                 {/* The 30 column container grid */}
                 {uptimeData && uptimeData.length > 0 ? (
-                    <div className="flex items-center gap-1.5 w-full h-12">
+                    <div className="flex items-center w-full h-14" style={{gap: "3.5px" }}>
                         {uptimeData.map((day, i) => (
                             <div
                                 key={i}
@@ -104,7 +104,7 @@ export function StatusGraph({ uptimeData, latencyData, startDateLabel, endDateLa
                 )}
 
                 {/* Timeline bottom boundary metrics */}
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono px-0.5">
+                <div className="flex items-center justify-between text-[14px] text-zinc-500 font-mono px-0.5">
                     <span>{startDateLabel}</span>
                     <span>{endDateLabel}</span>
                 </div>
@@ -115,7 +115,7 @@ export function StatusGraph({ uptimeData, latencyData, startDateLabel, endDateLa
             <div className="border-t border-zinc-800/60 pt-4 mt-2">
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">Incident Analysis</p>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-[12px] text-zinc-500">
                         {(latencyData && latencyData.length > 0
                             ? String(latencyData[latencyData.length - 1].time)
                             : uptimeData && uptimeData.length > 0
