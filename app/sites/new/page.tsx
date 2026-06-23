@@ -1,14 +1,12 @@
 'use client';
 import { addWebsite } from '@/lib/actions/addWebsite';
+import { ArrowLeft, Globe2, Plus, Radar, Server, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-interface MonitoredRouteInput {
-    routePath: string;
-    routeType: 'FRONTEND_PAGE' | 'BACKEND_HEALTH';
-}
-
-
 export default function NewSitePage() {
+    const router = useRouter();
+    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -137,30 +135,50 @@ export default function NewSitePage() {
             return;
         }
 
-        // call addWebsite function
-        const data = {...formData, monitoredRoutes: routeData};
-
-        const websiteData = (await addWebsite(data)).data;
-        window.location.href = `/sites + ${websiteData.monitoredRoutes[0].id}`; // Redirect to dashboard after submission
+        setIsSaving(true);
+        try {
+            const data = { ...formData, monitoredRoutes: routeData };
+            const websiteData = (await addWebsite(data)).data;
+            router.push(`/sites/${websiteData.monitoredRoutes[0].id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to add website');
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (
-        <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
-            {/* Background Grid Pattern */}
+        <main className="relative min-h-screen overflow-hidden bg-zinc-950 text-zinc-50">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(34,37,42,.32)_1px,transparent_1px),linear-gradient(90deg,rgba(34,37,42,.26)_1px,transparent_1px)] bg-[size:64px_64px]" />
-            
-            {/* Blur Effects */}
-            <div className="absolute left-1/2 top-32 h-80 w-80 -translate-x-1/2 rounded-full bg-emerald-950/30 blur-3xl" />
-            <div className="absolute right-0 bottom-32 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
+            <div className="absolute left-1/2 top-24 h-80 w-80 -translate-x-1/2 rounded-full bg-emerald-950/30 blur-3xl" />
+            <div className="absolute bottom-24 right-0 h-96 w-96 rounded-full bg-emerald-950/20 blur-3xl" />
 
-            {/* Content */}
-            <div className="relative px-6 py-20 sm:px-10 lg:px-16 mt-10">
-                <div className="mx-auto max-w-2xl">
-                    {/* Header */}
-                    <div className="mb-10">
-                        <h1 className="mb-2 text-4xl font-bold tracking-tight">
-                            Add a New <span className="text-emerald-400">Site</span>
-                        </h1>
+            <div className="relative px-6 pb-20 pt-36 sm:px-10 lg:px-16">
+                <div className="mx-auto max-w-5xl">
+                    <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+                        <div>
+                            <button
+                                onClick={() => router.back()}
+                                className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:border-emerald-400/30 hover:text-emerald-300"
+                            >
+                                <ArrowLeft className="size-4" />
+                                Back
+                            </button>
+                            <p className="font-[family-name:var(--font-architects-daughter)] text-2xl text-emerald-400">New signal</p>
+                            <h1 className="mt-2 text-4xl font-semibold tracking-tight text-zinc-50 sm:text-5xl">
+                                Add a site to Scout.
+                            </h1>
+                            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+                                Give Scout the public base URL and the routes that prove the app is really alive.
+                            </p>
+                        </div>
+                        <div className="hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm text-zinc-400 backdrop-blur md:block">
+                            <div className="flex items-center gap-3 text-zinc-200">
+                                <Radar className="size-5 text-emerald-400" />
+                                Up to {maxRoutes} routes
+                            </div>
+                            <p className="mt-2 max-w-52">Mix frontend pages with backend health checks.</p>
+                        </div>
                     </div>
 
                     {/* Error Message */}
@@ -171,10 +189,18 @@ export default function NewSitePage() {
                     )}
 
                     {/* Form Card */}
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 backdrop-blur-xl shadow-2xl shadow-black/40">
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-7 lg:p-8">
                         {/* Website Information Section */}
                         <div className="mb-8">
-                            <h2 className="mb-6 text-xl font-semibold text-emerald-400">Website Information</h2>
+                            <div className="mb-6 flex items-center gap-3">
+                                <span className="grid size-10 place-items-center rounded-xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+                                    <Globe2 className="size-5" />
+                                </span>
+                                <div>
+                                    <h2 className="text-xl font-semibold text-zinc-50">Website Information</h2>
+                                    <p className="text-sm text-zinc-500">Name, origin, and hosting context.</p>
+                                </div>
+                            </div>
                             
                             {/* Website Name */}
                             <div className="mb-5">
@@ -187,7 +213,7 @@ export default function NewSitePage() {
                                     placeholder="e.g., My Portfolio"
                                     value={formData.name}
                                     onChange={handleFormChange}
-                                    className={`w-full rounded-lg border bg-zinc-900/50 px-4 py-2.5 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
+                                    className={`h-12 w-full rounded-xl border bg-zinc-950/60 px-4 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
                                         fieldErrors['name']
                                             ? 'border-red-800 focus:ring-red-500/50'
                                             : 'border-zinc-700 focus:border-emerald-400/50 focus:ring-emerald-500/20'
@@ -209,7 +235,7 @@ export default function NewSitePage() {
                                     placeholder="e.g., https://example.com"
                                     value={formData.baseUrl}
                                     onChange={handleFormChange}
-                                    className={`w-full rounded-lg border bg-zinc-900/50 px-4 py-2.5 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
+                                    className={`h-12 w-full rounded-xl border bg-zinc-950/60 px-4 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
                                         fieldErrors['baseUrl']
                                             ? 'border-red-800 focus:ring-red-500/50'
                                             : 'border-zinc-700 focus:border-emerald-400/50 focus:ring-emerald-500/20'
@@ -229,7 +255,7 @@ export default function NewSitePage() {
                                     name="hostingProvider"
                                     value={formData.hostingProvider}
                                     onChange={handleFormChange}
-                                    className={`w-full rounded-lg border bg-zinc-900/50 px-4 py-2.5 text-zinc-50 transition focus:outline-none focus:ring-2 ${
+                                    className={`h-12 w-full rounded-xl border bg-zinc-950/60 px-4 text-zinc-50 transition focus:outline-none focus:ring-2 ${
                                         fieldErrors['hostingProvider']
                                             ? 'border-red-800 focus:ring-red-500/50'
                                             : 'border-zinc-700 focus:border-emerald-400/50 focus:ring-emerald-500/20'
@@ -249,23 +275,37 @@ export default function NewSitePage() {
                         </div>
 
                         {/* Monitored Routes Section */}
-                        <div className="border-t border-zinc-700 pt-8">
-                            <h2 className="mb-6 text-xl font-semibold text-emerald-400">Monitored Routes</h2>
-                            <p className="mb-6 text-sm text-zinc-400">
-                                Add up to {maxRoutes} routes to monitor. You can add frontend pages and backend health endpoints.
-                            </p>
+                        <div className="border-t border-zinc-800 pt-8">
+                            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                                <div className="flex items-center gap-3">
+                                    <span className="grid size-10 place-items-center rounded-xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+                                        <Server className="size-5" />
+                                    </span>
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-zinc-50">Monitored Routes</h2>
+                                        <p className="text-sm text-zinc-500">Add frontend pages and backend health endpoints.</p>
+                                    </div>
+                                </div>
+                                <span className="rounded-full border border-zinc-800 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-400">
+                                    {routeData.length}/{maxRoutes} routes
+                                </span>
+                            </div>
 
                             {/* Routes List */}
                             <div className="space-y-5 mb-6">
                                 {routeData.map((route, index) => (
-                                    <div key={index} className="rounded-lg border border-zinc-700 bg-zinc-900/30 p-5">
+                                    <div key={index} className="rounded-2xl border border-zinc-800 bg-zinc-950/45 p-5 transition hover:border-emerald-400/25">
                                         <div className="mb-4 flex items-center justify-between">
-                                            <span className="text-sm font-medium text-emerald-400">Route {index + 1}</span>
+                                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm font-medium text-emerald-300">
+                                                <Radar className="size-3.5" />
+                                                Route {index + 1}
+                                            </span>
                                             {routeData.length > 1 && (
                                                 <button
                                                     onClick={() => handleDeleteRoute(index)}
-                                                    className="text-sm font-medium text-red-400 transition hover:text-red-300 cursor-pointer"
+                                                    className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-red-300 transition hover:bg-red-950/30 hover:text-red-200 cursor-pointer"
                                                 >
+                                                    <Trash2 className="size-4" />
                                                     Delete
                                                 </button>
                                             )}
@@ -284,7 +324,7 @@ export default function NewSitePage() {
                                                     onChange={(e) =>
                                                         handleRouteChange(index, 'routePath', e.target.value)
                                                     }
-                                                    className={`w-full rounded-lg border bg-zinc-900/50 px-4 py-2.5 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
+                                                    className={`h-12 w-full rounded-xl border bg-zinc-950/60 px-4 text-zinc-50 placeholder-zinc-500 transition focus:outline-none focus:ring-2 ${
                                                         fieldErrors[`route-${index}`]
                                                             ? 'border-red-800 focus:ring-red-500/50'
                                                             : 'border-zinc-700 focus:border-emerald-400/50 focus:ring-emerald-500/20'
@@ -307,7 +347,7 @@ export default function NewSitePage() {
                                                     onChange={(e) =>
                                                         handleRouteChange(index, 'routeType', e.target.value)
                                                     }
-                                                    className={`w-full rounded-lg border bg-zinc-900/50 px-4 py-2.5 text-zinc-50 transition focus:outline-none focus:ring-2 ${
+                                                    className={`h-12 w-full rounded-xl border bg-zinc-950/60 px-4 text-zinc-50 transition focus:outline-none focus:ring-2 ${
                                                         fieldErrors[`routeType-${index}`]
                                                             ? 'border-red-800 focus:ring-red-500/50'
                                                             : 'border-zinc-700 focus:border-emerald-400/50 focus:ring-emerald-500/20'
@@ -331,30 +371,41 @@ export default function NewSitePage() {
                             {routeCount < maxRoutes ? (
                                 <button
                                     onClick={handleAddRoute}
-                                    className="w-full rounded-lg border border-emerald-400/50 bg-emerald-950/20 px-4 py-2.5 font-medium text-emerald-400 transition cursor-pointer hover:bg-emerald-950/40 cursor-pointer"
+                                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-400/10 px-4 font-semibold text-emerald-300 transition hover:bg-emerald-400/15 cursor-pointer"
                                 >
-                                    + Add Route
+                                    <Plus className="size-4" />
+                                    Add Route
                                 </button>
                             ) : (
-                                <p className="rounded-lg border border-zinc-700 bg-zinc-900/30 px-4 py-2.5 text-center text-sm text-zinc-400">
+                                <p className="rounded-full border border-zinc-800 bg-zinc-950/50 px-4 py-2.5 text-center text-sm text-zinc-400">
                                     Maximum of {maxRoutes} routes reached
                                 </p>
                             )}
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="mt-8 flex gap-3 border-t border-zinc-700 pt-8">
+                        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-zinc-800 pt-8 sm:flex-row">
                             <button
-                                onClick={handleSubmit}
-                                className="flex-1 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-6 py-3 font-medium text-zinc-950 transition duration-200 hover:from-emerald-400 hover:to-emerald-500 active:scale-95 shadow-lg shadow-emerald-500/20 cursor-pointer "
-                            >
-                                Add Site
-                            </button>
-                            <button
-                                onClick={() => window.history.back()}
-                                className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900/50 px-6 py-3 font-medium text-zinc-300 transition duration-200 hover:border-zinc-600 hover:bg-zinc-900 active:scale-95 cursor-pointer"
+                                type="button"
+                                onClick={() => router.back()}
+                                disabled={isSaving}
+                                className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950/60 px-6 font-semibold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={isSaving}
+                                className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-500 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                            >
+                                {isSaving ? (
+                                    'Adding...'
+                                ) : (
+                                    <>
+                                        Add Site
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
