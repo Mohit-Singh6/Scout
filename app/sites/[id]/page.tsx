@@ -7,7 +7,7 @@ import { getRouteById } from "@/lib/actions/getRouteById"
 import { getWebsiteByRouteId } from "@/lib/actions/getWebsiteByRouteId"
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown, ArrowLeft, Activity, Trash2, Edit2 } from "lucide-react";
+import { ChevronDown, ArrowLeft, Activity, Trash2, Edit2, ChevronDownIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner"
 
 import { subDays, subHours } from "date-fns";
@@ -20,6 +20,9 @@ import { RouteDetails } from "@/components/routeDetails";
 import { LatencyGraph } from "@/components/graphs/latencyGraph";
 import { StatusGraph } from "@/components/graphs/statusGraph";
 import { DeleteWebsite } from "@/lib/actions/deleteWebsite";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuTrigger, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
+import { DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
 
 interface MonitoredRoute {
     id: string;
@@ -72,6 +75,10 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [startDateLabel, setStartDateLabel] = useState<string>('24h ago');
     const [endDateLabel, setEndDateLabel] = useState<string>('Now');
     const [aiSumm, setAiSumm] = useState<string>('');
+    const [dateRange, setDataRange] = useState<DateRange | undefined>({
+        from: subHours(new Date(), 24),
+        to: new Date()
+    });
 
 
     useEffect(() => {
@@ -257,6 +264,10 @@ export default function Sites({ params, searchParams }: PageProps) {
         setIsRouteSelectOpen(false);
         router.push(`/sites/${newRouteId}`);
     };
+
+    const handleCustomInterval = () => {
+        handleGraphChange(undefined, dateRange?.from, dateRange?.to);
+    }
 
     const handleGraphChange = (range: string | undefined, stDate: Date | undefined, endDateLocal: Date | undefined) => {
         setIsGraphSelectOpen(false);
@@ -460,21 +471,74 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                                 {/* Custom Filter Selector Dropdown */}
                                 <div className="relative">
-                                    <button
+                                    {/* <button
                                         onClick={() => setIsGraphSelectOpen(!isGraphSelectOpen)}
                                         className="px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 text-xs flex items-center gap-2 hover:border-zinc-500 transition"
                                     >
                                         <span>{getRangeLabel()}</span>
                                         <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition ${isGraphSelectOpen ? 'rotate-180' : ''}`} />
-                                    </button>
+                                    </button> */}
 
-                                    {isGraphSelectOpen && (
+
+                                    <DropdownMenu modal={false}>
+                                        <DropdownMenuTrigger asChild>
+                                            {
+                                                <button className="px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 text-xs flex items-center gap-2 hover:border-zinc-500 transition">
+                                                    <span>{getRangeLabel()}</span>
+                                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                                                </button>
+                                            }
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50" >
+                                            <DropdownMenuItem onClick={() => handleGraphChange('1d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                                Last 24 Hours
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuItem onClick={() => handleGraphChange('7d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                                Last 7 days
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuItem onClick={() => handleGraphChange('30d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                                Last 30 days
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:!text-zinc-200 cursor-pointer ${timeRangeType === 'custom' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                                    <span>Custom</span>
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+
+                                                    <DropdownMenuSubContent className="bg-zinc-800">
+                                                        <div className="bg-zinc-800">
+                                                            <Calendar
+                                                                mode="range" 
+                                                                disabled={{after: new Date(), before: subDays(new Date(), 30)}}
+                                                                selected={dateRange}
+                                                                onSelect={setDataRange}
+
+                                                                captionLayout="dropdown"
+
+                                                                className="rounded-lg border border-zinc-700 bg-zinc-800 text-zinc-100 p-3"
+                                                            />
+                                                            <button className="w-full bg-black/20 text-emerald-500 rounded-lg mt-1 border-1 border-zinc-500 p-1 hover:bg-emerald-800/10" onClick={() => handleCustomInterval()}>
+                                                                Update Graph
+                                                            </button>
+                                                        </div>
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* {isGraphSelectOpen && (
                                         <div className="absolute right-0 top-full mt-1 w-48 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 overflow-hidden">
-                                            <button onClick={() => handleGraphChange('1d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 24 Hours</button>
-                                            <button onClick={() => handleGraphChange('7d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 7 Days</button>
-                                            <button onClick={() => handleGraphChange('30d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 30 Days</button>
+                                                <button onClick={() => handleGraphChange('1d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 24 Hours</button>
+                                                <button onClick={() => handleGraphChange('7d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 7 Days</button>
+                                                <button onClick={() => handleGraphChange('30d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 30 Days</button>
+                                                <button onClick={() => handleCustomInterval()} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Custom</button>
+                                                
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 
