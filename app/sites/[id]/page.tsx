@@ -64,7 +64,6 @@ export default function Sites({ params, searchParams }: PageProps) {
     const [website, setWebsite] = useState<Website | null>(null);
     const [allRoutes, setAllRoutes] = useState<MonitoredRoute[]>([]);
     const [isRouteSelectOpen, setIsRouteSelectOpen] = useState(false);
-    const [isGraphSelectOpen, setIsGraphSelectOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingGraph, setIsLoadingGraph] = useState(false);
 
@@ -270,7 +269,6 @@ export default function Sites({ params, searchParams }: PageProps) {
     }
 
     const handleGraphChange = (range: string | undefined, stDate: Date | undefined, endDateLocal: Date | undefined) => {
-        setIsGraphSelectOpen(false);
         setIsLoadingGraph(true);
 
 
@@ -471,14 +469,6 @@ export default function Sites({ params, searchParams }: PageProps) {
 
                                 {/* Custom Filter Selector Dropdown */}
                                 <div className="relative">
-                                    {/* <button
-                                        onClick={() => setIsGraphSelectOpen(!isGraphSelectOpen)}
-                                        className="px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 text-xs flex items-center gap-2 hover:border-zinc-500 transition"
-                                    >
-                                        <span>{getRangeLabel()}</span>
-                                        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition ${isGraphSelectOpen ? 'rotate-180' : ''}`} />
-                                    </button> */}
-
 
                                     <DropdownMenu modal={false}>
                                         <DropdownMenuTrigger asChild>
@@ -489,21 +479,21 @@ export default function Sites({ params, searchParams }: PageProps) {
                                                 </button>
                                             }
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50" >
-                                            <DropdownMenuItem onClick={() => handleGraphChange('1d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                        <DropdownMenuContent align="end" className="mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 w-48" >
+                                            <DropdownMenuItem onClick={() => handleGraphChange('1d', undefined, undefined)} className={`text-sm text-zinc-300 px-2 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
                                                 Last 24 Hours
                                             </DropdownMenuItem>
 
-                                            <DropdownMenuItem onClick={() => handleGraphChange('7d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                            <DropdownMenuItem onClick={() => handleGraphChange('7d', undefined, undefined)} className={`text-sm text-zinc-300 px-2 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
                                                 Last 7 days
                                             </DropdownMenuItem>
 
-                                            <DropdownMenuItem onClick={() => handleGraphChange('30d', undefined, undefined)} className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                            <DropdownMenuItem onClick={() => handleGraphChange('30d', undefined, undefined)} className={`text-sm text-zinc-300 px-2 py-1.5 mb-0.5 focus:bg-zinc-700 focus:text-zinc-200 cursor-pointer ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
                                                 Last 30 days
                                             </DropdownMenuItem>
 
                                             <DropdownMenuSub>
-                                                <DropdownMenuSubTrigger className={`text-xs text-zinc-300 py-1.5 mb-0.5 focus:bg-zinc-700 focus:!text-zinc-200 cursor-pointer ${timeRangeType === 'custom' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
+                                                <DropdownMenuSubTrigger className={`text-sm text-zinc-300 px-2 py-1.5 mb-0.5 focus:bg-zinc-700 focus:!text-zinc-200 cursor-pointer ${timeRangeType === 'custom' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold focus:bg-emerald-500/20 focus:text-emerald-400' : ''}`}>
                                                     <span>Custom</span>
                                                 </DropdownMenuSubTrigger>
                                                 <DropdownMenuPortal>
@@ -530,15 +520,6 @@ export default function Sites({ params, searchParams }: PageProps) {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
 
-                                    {/* {isGraphSelectOpen && (
-                                        <div className="absolute right-0 top-full mt-1 w-48 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl z-50 overflow-hidden">
-                                                <button onClick={() => handleGraphChange('1d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '24h' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 24 Hours</button>
-                                                <button onClick={() => handleGraphChange('7d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition border-b border-zinc-700/40 ${timeRangeType === '7days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 7 Days</button>
-                                                <button onClick={() => handleGraphChange('30d', undefined, undefined)} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Last 30 Days</button>
-                                                <button onClick={() => handleCustomInterval()} className={`w-full px-3 py-2 text-left text-xs transition ${timeRangeType === '30days' ? 'bg-emerald-500/20 border-l-2 border-l-emerald-500 text-emerald-400 font-semibold' : 'hover:bg-zinc-700 text-zinc-400'}`}>Custom</button>
-                                                
-                                        </div>
-                                    )} */}
                                 </div>
                             </div>
 
